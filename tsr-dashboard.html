@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relative TSR Dashboard | Semler Brossy</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+:root{--navy:#003A69;--dark-navy:#002452;--teal:#0083C7;--cyan:#0DB3C7;--lgray:#D9D9D6;--mgray:#B3B2B1;--bg:#F2F2F0;--border:#E0E0E0;--pos:#4CAF50;--neg:#C0392B;--white:#fff;--text:#333;--font:'Calibri','Inter',system-ui,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.4}
+
+/* HEADER */
+#app-header{position:fixed;top:0;left:0;right:0;height:48px;background:var(--dark-navy);display:flex;align-items:center;padding:0 16px;z-index:100;gap:12px}
+#hdr-company{color:#fff;font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0}
+#hdr-period{flex:1;text-align:center;color:rgba(255,255,255,.75);font-size:12px}
+#hdr-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 11px;border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font);transition:background 200ms}
+.hdr-btn:hover{background:rgba(255,255,255,.28)}
+#hdr-brand{color:rgba(255,255,255,.5);font-size:11px;white-space:nowrap}
+
+/* LAYOUT */
+#app-layout{display:flex;margin-top:48px;min-height:calc(100vh - 88px)}
+
+/* SIDEBAR */
+#config-panel{width:276px;min-width:276px;background:#fff;border-right:1px solid var(--border);overflow-y:auto;height:calc(100vh - 48px);position:sticky;top:48px;padding:14px;transition:width 200ms,min-width 200ms,padding 200ms}
+#config-panel.collapsed{width:0;min-width:0;padding:0;overflow:hidden}
+#sidebar-toggle{position:fixed;top:58px;left:276px;width:16px;height:32px;background:#fff;border:1px solid var(--border);border-left:none;border-radius:0 4px 4px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:99;color:var(--mgray);font-size:10px;transition:left 200ms}
+#sidebar-toggle.collapsed{left:0}
+
+/* CONFIG ELEMENTS */
+.cfg-sec{margin-bottom:18px}
+.cfg-sec-hdr{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mgray);text-transform:uppercase;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.cfg-field{margin-bottom:9px}
+.cfg-lbl{font-size:11px;color:#666;margin-bottom:3px;display:block}
+.cfg-inp{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:12px;color:var(--text);outline:none}
+.cfg-inp:focus{border-color:var(--teal)}
+.cfg-select{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:12px;color:var(--text);background:#fff;outline:none}
+.cfg-select:focus{border-color:var(--teal)}
+.tgl-grp{display:flex;border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.tgl-btn{flex:1;padding:5px 3px;border:none;background:#fff;cursor:pointer;font-size:11px;font-family:var(--font);color:#666;transition:all 200ms;text-align:center}
+.tgl-btn.active{background:var(--navy);color:#fff}
+.tgl-btn:not(:last-child){border-right:1px solid var(--border)}
+.n-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.n-btn{padding:3px 8px;border:1px solid var(--border);border-radius:2px;background:#fff;cursor:pointer;font-size:11px;font-family:var(--font);color:#666;transition:all 200ms}
+.n-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
+.n-cust{width:52px;padding:3px 6px;border:1px solid var(--border);border-radius:2px;font-size:11px;font-family:var(--font);outline:none}
+.n-cust:focus{border-color:var(--teal)}
+.sw-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.sw-lbl{font-size:12px}
+.sw{position:relative;width:36px;height:18px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sw-sl{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:18px;transition:200ms}
+.sw-sl:before{position:absolute;content:"";height:14px;width:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:200ms}
+.sw input:checked+.sw-sl{background:var(--teal)}
+.sw input:checked+.sw-sl:before{transform:translateX(18px)}
+.meth-badge{display:inline-block;padding:3px 8px;background:#EEF5FF;border:1px solid var(--teal);border-radius:10px;font-size:10px;color:var(--teal);margin-top:5px;line-height:1.4}
+#apply-btn{width:100%;padding:8px;background:var(--navy);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:13px;font-family:var(--font);font-weight:700;margin-top:10px;transition:background 200ms}
+#apply-btn:hover{background:var(--teal)}
+
+/* PEER LIST */
+#peer-list{display:flex;flex-direction:column;gap:3px;margin-bottom:7px;max-height:180px;overflow-y:auto}
+.peer-item{display:flex;align-items:center;gap:5px;padding:3px 6px;background:#F8F8F8;border:1px solid var(--border);border-radius:3px}
+.peer-tkr{font-weight:700;font-size:11px;color:var(--navy);min-width:46px}
+.peer-nm{flex:1;font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peer-st{font-size:10px;width:14px;text-align:center}
+.peer-rm{background:none;border:none;color:var(--mgray);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+.peer-rm:hover{color:var(--neg)}
+.peer-add-row{display:flex;gap:5px}
+.peer-add-inp{flex:1;padding:5px 7px;border:1px solid var(--border);border-radius:3px;font-size:12px;font-family:var(--font);outline:none}
+.peer-add-inp:focus{border-color:var(--teal)}
+.peer-add-btn{padding:5px 9px;background:var(--navy);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:14px;line-height:1}
+
+/* BENCHMARK PILLS */
+.bm-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.bm-pill{display:flex;align-items:center;gap:3px;padding:3px 8px;background:#fff;border:1px solid var(--border);border-radius:10px;font-size:11px;cursor:pointer;transition:all 200ms}
+.bm-pill.active{border-color:var(--navy);background:var(--navy);color:#fff}
+.bm-pill-x{font-size:12px;line-height:1;color:rgba(255,255,255,.7);cursor:pointer;margin-left:2px}
+
+/* DASHBOARD */
+#dashboard{flex:1;padding:18px;overflow-x:hidden;min-width:0}
+#preset-banner{display:none;background:#EEF9EE;border:1px solid var(--pos);border-radius:4px;padding:7px 12px;margin-bottom:14px;font-size:12px;color:#2E7D32}
+#error-banner{background:#FFF0EE;border:1px solid var(--neg);border-radius:4px;padding:7px 12px;margin-bottom:14px;font-size:12px;color:var(--neg)}
+#fetch-progress{background:#EEF5FF;border:1px solid var(--teal);border-radius:4px;padding:7px 12px;margin-bottom:14px;font-size:11px;display:none}
+.fp-bar{height:4px;background:var(--lgray);border-radius:2px;margin-top:5px;overflow:hidden}
+.fp-fill{height:100%;background:var(--teal);border-radius:2px;transition:width 300ms}
+
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.sec-bar{width:2px;height:16px;background:var(--navy);border-radius:1px;flex-shrink:0}
+.sec-title{font-size:13px;font-weight:700;color:var(--navy)}
+.sec-sub{font-size:11px;color:var(--mgray);letter-spacing:.05em;text-transform:uppercase}
+
+/* KPI STRIP */
+.kpi-cell{background:#fff;padding:10px 16px}
+.kpi-cell-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--mgray);text-transform:uppercase;margin-bottom:4px}
+.kpi-cell-val{font-size:22px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:2px}
+.kpi-cell-val.pos{color:var(--pos)}.kpi-cell-val.neg{color:var(--neg)}
+.kpi-cell-sub{font-size:10px;color:var(--mgray)}
+.pctl-track{margin:5px 0 3px;height:3px;background:var(--lgray);border-radius:2px;overflow:hidden}
+.pctl-fill{height:100%;background:var(--teal);border-radius:2px;transition:width 500ms}
+
+/* CHART CARDS */
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:4px;padding:15px;margin-bottom:18px}
+.cc-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px}
+.cc-title{font-size:13px;font-weight:700;color:var(--navy)}
+.cc-sub{font-size:11px;color:var(--mgray);margin-top:2px}
+.cc-badge{font-size:10px;padding:3px 8px;background:#F0F4F8;border:1px solid #D0DCE8;border-radius:10px;color:var(--navy);white-space:nowrap}
+.chart-wrap{position:relative}
+
+/* DATA TABLE */
+#tbl-section{background:#fff;border:1px solid var(--border);border-radius:4px;margin-bottom:18px}
+.tbl-toggle-hdr{padding:11px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.tbl-toggle-hdr:hover{background:#F8F8F8}
+.tbl-arr{font-size:14px;color:var(--mgray);transition:transform 200ms}
+.tbl-arr.open{transform:rotate(180deg)}
+#tbl-body{display:none;padding:0 15px 15px}
+#tbl-body.open{display:block}
+.dtable{width:100%;border-collapse:collapse;font-size:12px}
+.dtable th{text-align:left;padding:6px 8px;background:#F5F5F5;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--navy);cursor:pointer;user-select:none;white-space:nowrap}
+.dtable th:hover{background:#EBEBEB}
+.dtable th.sa::after{content:' ↑'}.dtable th.sd::after{content:' ↓'}
+.dtable td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.dtable tr.sub-row{background:#EEF2F7;font-weight:700}
+.dtable tr:hover{background:#F8F8F8}.dtable tr.sub-row:hover{background:#E5EBF3}
+.tbl-export{display:flex;justify-content:flex-end;margin-top:9px}
+.exp-btn{padding:6px 13px;background:#fff;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:12px;color:var(--navy);font-family:var(--font);transition:background 200ms}
+.exp-btn:hover{background:#F0F0F0}
+
+/* LOADING */
+#loading-overlay{position:fixed;top:48px;left:276px;right:0;bottom:40px;background:rgba(242,242,240,.88);display:flex;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:11px;transition:left 200ms}
+#loading-overlay.hidden{display:none}
+.spin{width:34px;height:34px;border:3px solid var(--lgray);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{color:var(--navy);font-size:13px}
+.load-prog{font-size:11px;color:var(--mgray)}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,#F0F0F0 25%,#E0E0E0 50%,#F0F0F0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:3px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* FOOTER */
+#app-footer{background:var(--dark-navy);color:rgba(255,255,255,.65);font-size:11px;padding:9px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* RESPONSIVE */
+@media(max-width:1200px){#kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){#config-panel{width:252px;min-width:252px}#sidebar-toggle{left:252px}#loading-overlay{left:252px}}
+
+/* PRINT */
+@media print{
+  #app-header{position:relative}
+  #config-panel,#sidebar-toggle,#hdr-actions,#loading-overlay,#apply-btn{display:none!important}
+  #app-layout{margin-top:0}
+  #dashboard{padding:8px}
+  .chart-card,.kpi-card{break-inside:avoid}
+  #tbl-body{display:block!important}
+}
+
+/* TOOLTIP */
+.tt-wrap{position:relative;display:inline-flex}
+.tt-icon{width:14px;height:14px;border-radius:50%;background:var(--mgray);color:#fff;font-size:9px;display:inline-flex;align-items:center;justify-content:center;cursor:help}
+.tt-content{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--dark-navy);color:#fff;font-size:11px;padding:6px 9px;border-radius:3px;width:200px;z-index:200;line-height:1.5;pointer-events:none}
+.tt-wrap:hover .tt-content{display:block}
+
+input[type="date"]{padding:5px 8px;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:12px;color:var(--text);outline:none;width:100%}
+input[type="date"]:focus{border-color:var(--teal)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="app-header">
+  <div id="hdr-company">
+    <span id="hdr-ticker">GWRE</span>
+    <span style="opacity:.5;margin:0 6px">|</span>
+    <span id="hdr-name">Guidewire Software</span>
+  </div>
+  <div id="hdr-period">Loading...</div>
+  <div id="hdr-actions">
+    <button class="hdr-btn" onclick="App.shareLink()">Share Link</button>
+    <button class="hdr-btn" id="cfg-toggle-btn" onclick="App.toggleSidebar()">&#9776; Config</button>
+    <span id="hdr-brand">Prepared by Semler Brossy</span>
+  </div>
+</header>
+
+<div id="sidebar-toggle" onclick="App.toggleSidebar()">&#8249;</div>
+
+<!-- MAIN LAYOUT -->
+<div id="app-layout">
+
+  <!-- CONFIG SIDEBAR -->
+  <aside id="config-panel">
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Subject Company</div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Ticker Symbol</label>
+        <input type="text" id="c-subject-tkr" class="cfg-inp" value="GWRE" placeholder="e.g. AAPL" style="text-transform:uppercase">
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Display Name</label>
+        <input type="text" id="c-subject-name" class="cfg-inp" value="Guidewire Software">
+      </div>
+    </div>
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Peer Group</div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Group Type</label>
+        <div class="tgl-grp" id="peer-type-tgl">
+          <button class="tgl-btn active" data-v="manual" onclick="App.setPeerType('manual')">Manual</button>
+          <button class="tgl-btn" data-v="index" onclick="App.setPeerType('index')">Index</button>
+        </div>
+      </div>
+      <!-- Manual -->
+      <div id="manual-peer-sec">
+        <div id="peer-list"></div>
+        <div class="peer-add-row">
+          <input type="text" id="peer-add-inp" class="peer-add-inp" placeholder="Ticker (e.g. NOW)" style="text-transform:uppercase"
+            onkeydown="if(event.key==='Enter')App.addPeerFromInput()">
+          <button class="peer-add-btn" onclick="App.addPeerFromInput()">+</button>
+        </div>
+        <div style="margin-top:7px">
+          <label class="cfg-lbl">Bulk paste (comma or newline separated)</label>
+          <textarea id="bulk-inp" class="cfg-inp" rows="3" placeholder="NOW, PCTY, PAYC, HUBS..."></textarea>
+          <button style="width:100%;margin-top:4px;padding:5px;background:var(--navy);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)" onclick="App.addBulkPeers()">Add All</button>
+        </div>
+      </div>
+      <!-- Index -->
+      <div id="index-peer-sec" style="display:none">
+        <div class="cfg-field">
+          <select id="index-select" class="cfg-select">
+            <option value="">-- Select Group --</option>
+            <optgroup label="S&amp;P Indices">
+              <option value="SP500">S&P 500</option>
+              <option value="SP400">S&P 400 MidCap</option>
+              <option value="SP600">S&P 600 SmallCap</option>
+            </optgroup>
+            <optgroup label="GICS Sectors (S&amp;P 500)">
+              <option value="GICS_IT">Information Technology</option>
+              <option value="GICS_HC">Health Care</option>
+              <option value="GICS_FIN">Financials</option>
+              <option value="GICS_IND">Industrials</option>
+              <option value="GICS_CD">Consumer Discretionary</option>
+              <option value="GICS_CS">Consumer Staples</option>
+              <option value="GICS_ENE">Energy</option>
+              <option value="GICS_UTL">Utilities</option>
+              <option value="GICS_MAT">Materials</option>
+              <option value="GICS_RE">Real Estate</option>
+              <option value="GICS_COM">Communication Services</option>
+            </optgroup>
+          </select>
+        </div>
+        <button style="width:100%;padding:6px;background:var(--navy);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)" onclick="App.loadIndexGroup()">Load as Peer Group</button>
+        <div id="index-note" style="margin-top:5px;font-size:10px;color:#888;line-height:1.4"></div>
+      </div>
+    </div>
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Benchmark Overlay</div>
+      <div class="bm-pills" id="bm-pills">
+        <div class="bm-pill active" data-tkr="^GSPC" onclick="App.toggleBenchmark(this)">S&amp;P 500</div>
+        <div class="bm-pill" data-tkr="^RUT" onclick="App.toggleBenchmark(this)">Russell 2000</div>
+        <div class="bm-pill" data-tkr="^MID" onclick="App.toggleBenchmark(this)">S&amp;P 400</div>
+      </div>
+      <div class="peer-add-row" style="margin-top:7px">
+        <input type="text" id="bm-add-inp" class="peer-add-inp" placeholder="Custom ticker" style="text-transform:uppercase"
+          onkeydown="if(event.key==='Enter')App.addCustomBenchmark()">
+        <button class="peer-add-btn" onclick="App.addCustomBenchmark()">+</button>
+      </div>
+    </div>
+
+    <!-- CSV PASTE FALLBACK -->
+    <div class="cfg-sec" id="csv-section" style="display:none">
+      <div class="cfg-sec-hdr" style="color:var(--neg)">&#9888; Paste CSV Data</div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px;line-height:1.5">
+        Auto-fetch failed. Download each ticker from
+        <strong>finance.yahoo.com → Historical Data → Download</strong>,
+        then paste the CSV below (one ticker at a time).
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Ticker for this CSV</label>
+        <input type="text" id="csv-ticker-inp" class="cfg-inp" placeholder="e.g. GWRE" style="text-transform:uppercase">
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Paste CSV content here</label>
+        <textarea id="csv-paste-area" class="cfg-inp" rows="6" placeholder="Date,Open,High,Low,Close,Adj Close,Volume&#10;2021-01-04,84.50,85.10,82.30,83.40,83.40,1234567&#10;..."></textarea>
+      </div>
+      <button style="width:100%;padding:6px;background:var(--teal);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;font-family:var(--font);font-weight:700" onclick="App.parseCSVPaste()">Load This Ticker</button>
+      <div id="csv-status" style="margin-top:5px;font-size:11px"></div>
+      <div style="margin-top:8px;font-size:11px;color:#888">
+        Also accepts file upload:
+        <input type="file" id="csv-file-inp" accept=".csv" onchange="App.handleCSVFile(this)" style="display:block;margin-top:4px;font-size:11px">
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--teal);font-weight:700" id="csv-loaded-list"></div>
+    </div>
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Measurement Period</div>
+      <div class="cfg-field">
+        <div class="tgl-grp" id="period-tgl">
+          <button class="tgl-btn" data-v="1Y" onclick="App.setPeriodPreset('1Y')">1Y</button>
+          <button class="tgl-btn active" data-v="3Y" onclick="App.setPeriodPreset('3Y')">3Y</button>
+          <button class="tgl-btn" data-v="5Y" onclick="App.setPeriodPreset('5Y')">5Y</button>
+          <button class="tgl-btn" data-v="YTD" onclick="App.setPeriodPreset('YTD')">YTD</button>
+          <button class="tgl-btn" data-v="custom" onclick="App.setPeriodPreset('custom')">Custom</button>
+        </div>
+      </div>
+      <div id="custom-dates" style="display:none">
+        <div class="cfg-field">
+          <label class="cfg-lbl">Start Date</label>
+          <input type="date" id="c-start" class="cfg-inp">
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">End Date</label>
+          <input type="date" id="c-end" class="cfg-inp">
+        </div>
+      </div>
+      <div id="period-display" style="font-size:11px;color:#888;margin-top:3px"></div>
+    </div>
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Price Averaging Method</div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Start Price</label>
+        <div class="tgl-grp" id="start-meth-tgl">
+          <button class="tgl-btn" data-v="single" onclick="App.setMethod('start','single')">Single Day</button>
+          <button class="tgl-btn active" data-v="avg" onclick="App.setMethod('start','avg')">N-Day Avg</button>
+        </div>
+        <div class="n-row" id="start-n-row">
+          <button class="n-btn active" data-n="20" onclick="App.setN('start',20,this)">20</button>
+          <button class="n-btn" data-n="30" onclick="App.setN('start',30,this)">30</button>
+          <button class="n-btn" data-n="60" onclick="App.setN('start',60,this)">60</button>
+          <button class="n-btn" data-n="custom" onclick="App.setN('start','custom',this)">Custom</button>
+          <input type="number" id="start-n-cust" class="n-cust" value="20" min="1" max="120" style="display:none" oninput="App.setNCustom('start',this.value)">
+        </div>
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">End Price</label>
+        <div class="tgl-grp" id="end-meth-tgl">
+          <button class="tgl-btn active" data-v="single" onclick="App.setMethod('end','single')">Single Day</button>
+          <button class="tgl-btn" data-v="avg" onclick="App.setMethod('end','avg')">N-Day Avg</button>
+        </div>
+        <div class="n-row" id="end-n-row" style="display:none">
+          <button class="n-btn active" data-n="20" onclick="App.setN('end',20,this)">20</button>
+          <button class="n-btn" data-n="30" onclick="App.setN('end',30,this)">30</button>
+          <button class="n-btn" data-n="60" onclick="App.setN('end',60,this)">60</button>
+          <button class="n-btn" data-n="custom" onclick="App.setN('end','custom',this)">Custom</button>
+          <input type="number" id="end-n-cust" class="n-cust" value="20" min="1" max="120" style="display:none" oninput="App.setNCustom('end',this.value)">
+        </div>
+      </div>
+      <div class="meth-badge" id="meth-badge">Start: 20-day avg · End: Single day · Total Return</div>
+    </div>
+
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Display Options</div>
+      <div class="sw-row"><span class="sw-lbl">Total Return (incl. dividends)</span><label class="sw"><input type="checkbox" id="opt-tr" checked onchange="App.optChanged()"><span class="sw-sl"></span></label></div>
+      <div class="sw-row"><span class="sw-lbl">Annualized (vs. Cumulative)</span><label class="sw"><input type="checkbox" id="opt-ann" checked onchange="App.optChanged()"><span class="sw-sl"></span></label></div>
+      <div class="sw-row"><span class="sw-lbl">Show Peer Median Line</span><label class="sw"><input type="checkbox" id="opt-med" checked onchange="App.optChanged()"><span class="sw-sl"></span></label></div>
+      <div class="sw-row"><span class="sw-lbl">Show 25/75th Pctl Band</span><label class="sw"><input type="checkbox" id="opt-band" checked onchange="App.optChanged()"><span class="sw-sl"></span></label></div>
+      <div class="sw-row"><span class="sw-lbl">Show Benchmark Line</span><label class="sw"><input type="checkbox" id="opt-bm" checked onchange="App.optChanged()"><span class="sw-sl"></span></label></div>
+      <div class="cfg-field" style="display:none">
+        <label class="cfg-lbl">Peer Line Display</label>
+        <div class="tgl-grp" id="peer-disp-tgl">
+          <button class="tgl-btn active" data-v="all" onclick="App.setPeerDisplay('all')">All</button>
+          <button class="tgl-btn" data-v="median" onclick="App.setPeerDisplay('median')">Median+Band</button>
+          <button class="tgl-btn" data-v="subject" onclick="App.setPeerDisplay('subject')">Subj+Median</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- API KEY -->
+    <div class="cfg-sec">
+      <div class="cfg-sec-hdr">Live Data API Keys</div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Financial Modeling Prep (FMP)</label>
+        <input type="text" id="c-fmp-key" class="cfg-inp" placeholder="Paste your FMP API key" autocomplete="off">
+        <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
+          Free at <strong>financialmodelingprep.com</strong> · 250 calls/day · true TSR (adj. close)
+        </div>
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Polygon.io</label>
+        <input type="text" id="c-polygon-key" class="cfg-inp" placeholder="Paste your Polygon API key" autocomplete="off">
+        <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
+          Free at <strong>polygon.io</strong> · unlimited on paid plan ($29/mo) · true TSR (adj. close). Used automatically if FMP is unavailable.
+        </div>
+      </div>
+    </div>
+
+    <button id="apply-btn" onclick="App.applyConfig()">&#8635; Refresh &amp; Apply</button>
+    <button onclick="App.toggleCSVSection()" style="width:100%;margin-top:6px;padding:6px;background:#fff;color:var(--navy);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)">&#128196; Paste CSV Data (manual fallback)</button>
+
+  </aside><!-- /config-panel -->
+
+  <!-- DASHBOARD -->
+  <main id="dashboard">
+    <div id="preset-banner"></div>
+    <div id="demo-banner" style="display:none;background:#FFF8E1;border:1px solid #F9A825;border-radius:4px;padding:9px 14px;margin-bottom:14px;font-size:12px;color:#7A5F00;line-height:1.5">
+      <strong>⚠ Demo Mode — Synthetic Data — Not for Client Use</strong> &nbsp;|&nbsp;
+      Live market data could not be fetched. Charts use simulated prices for illustration only.
+      To load real data: <strong>(1)</strong> Add a free Financial Modeling Prep API key in the sidebar and click Refresh, or
+      <strong>(2)</strong> paste Yahoo Finance CSV exports using "Paste CSV Data" in the sidebar.
+    </div>
+    <div id="fetch-progress"><span id="fp-text">Fetching data...</span><div class="fp-bar"><div class="fp-fill" id="fp-fill" style="width:0%"></div></div></div>
+
+    <div id="diag-panel" style="display:none;background:#F0F4FF;border:1px solid #99B;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:10px;color:#334;line-height:1.6;word-break:break-all"></div>
+    <div id="error-banner" style="display:none"></div>
+
+    <!-- KPI STAT STRIP -->
+    <div id="kpi-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:16px">
+      <div class="kpi-cell">
+        <div class="kpi-cell-lbl">Subject TSR</div>
+        <div class="kpi-cell-val" id="kv-subject">—</div>
+        <div class="kpi-cell-sub" id="ks-subject"></div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-lbl">Percentile Rank</div>
+        <div class="kpi-cell-val" id="kv-pctl">—</div>
+        <div class="pctl-track" style="margin:5px 0 3px"><div class="pctl-fill" id="pctl-fill" style="width:0%"></div></div>
+        <div class="kpi-cell-sub" id="ks-pctl"></div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-lbl">Peer Median TSR</div>
+        <div class="kpi-cell-val" id="kv-med">—</div>
+        <div class="kpi-cell-sub" id="ks-med"></div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-cell-lbl">vs. Median</div>
+        <div class="kpi-cell-val" id="kv-vmed">—</div>
+        <div class="kpi-cell-sub" id="ks-vmed"></div>
+      </div>
+    </div>
+
+    <!-- Line Chart -->
+    <div class="chart-card" id="line-sec">
+      <div class="cc-hdr">
+        <div>
+          <div class="cc-title">Indexed Total Shareholder Return</div>
+          <div class="cc-sub" id="line-sub">Base = 100 at measurement start price</div>
+        </div>
+        <span class="cc-badge" id="line-badge"></span>
+      </div>
+      <div class="chart-wrap" style="height:380px"><canvas id="line-chart"></canvas></div>
+    </div>
+
+    <!-- Multi-Period Percentile Table -->
+    <div class="chart-card" id="multiperiod-sec">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px">
+        <div>
+          <div class="cc-title">TSR Percentile Rank — Multi-Period Reference</div>
+          <div class="cc-sub" id="mpt-sub">Subject company vs. same peer group across measurement windows</div>
+        </div>
+        <div id="mpt-asof" style="font-size:11px;color:var(--navy);font-weight:600;background:#EEF2F7;padding:3px 10px;border-radius:10px;white-space:nowrap"></div>
+      </div>
+      <div id="multiperiod-table-wrap"></div>
+    </div>
+
+    <!-- Methodology Note -->
+    <div class="chart-card" id="methodology-card" style="margin-bottom:18px">
+      <div class="cc-hdr" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div>
+          <div class="cc-title">Methodology &amp; Data Notes</div>
+          <div class="cc-sub" id="meth-card-sub">Click to expand</div>
+        </div>
+        <span class="cc-badge" id="meth-card-badge">TSR Definition</span>
+      </div>
+      <div id="methodology-body" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px 32px;font-size:12px;line-height:1.7;color:#444">
+          <div>
+            <div style="font-weight:700;color:var(--navy);margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">TSR Formula</div>
+            <div><strong>Cumulative TSR</strong> = (Adj. End Price ÷ Adj. Start Price) − 1</div>
+            <div><strong>Annualized TSR</strong> = (1 + Cumulative TSR)<sup>1/years</sup> − 1</div>
+            <div style="margin-top:6px"><strong>Adjusted price</strong> accounts for both stock splits and dividends reinvested, ensuring a true total shareholder return measure.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:var(--navy);margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Price Averaging</div>
+            <div id="meth-start-detail">Start price: 20-trading-day average ending on measurement start date</div>
+            <div id="meth-end-detail">End price: closing price on measurement end date</div>
+            <div style="margin-top:6px">Averaging the start price reduces the effect of short-term price volatility on the measurement baseline, consistent with best-practice compensation plan design.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:var(--navy);margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Percentile Rank</div>
+            <div>Percentile rank is calculated among the disclosed peer group only (subject company excluded from denominator). A rank at the <strong>50th percentile</strong> means the subject outperformed half the peer group.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:var(--navy);margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Data Source</div>
+            <div id="meth-source-detail">Price data sourced from Yahoo Finance or Financial Modeling Prep. Adjusted close prices reflect splits and dividends reinvested.</div>
+            <div style="margin-top:6px;font-size:11px;color:var(--mgray)" id="meth-asof-detail"></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--mgray);line-height:1.6">
+          Prepared by Semler Brossy Consulting Group &nbsp;·&nbsp; Analysis is based on publicly available market data &nbsp;·&nbsp; Past TSR performance is not indicative of future results &nbsp;·&nbsp; This tool is intended for internal compensation committee analysis only
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div id="tbl-section">
+      <div class="tbl-toggle-hdr" onclick="App.toggleTable()">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="sec-bar"></div>
+          <span class="sec-title">Detailed Data Table</span>
+          <span style="font-size:11px;color:var(--mgray)" id="tbl-count"></span>
+        </div>
+        <span class="tbl-arr" id="tbl-arr">&#9660;</span>
+      </div>
+      <div id="tbl-body">
+        <table class="dtable" id="dtable">
+          <thead><tr>
+            <th data-col="rank" onclick="App.sortTable('rank')">Rank</th>
+            <th data-col="name" onclick="App.sortTable('name')">Company</th>
+            <th data-col="ticker" onclick="App.sortTable('ticker')">Ticker</th>
+            <th data-col="startPrice" onclick="App.sortTable('startPrice')">Start Price</th>
+            <th data-col="endPrice" onclick="App.sortTable('endPrice')">End Price</th>
+            <th data-col="cumTSR" onclick="App.sortTable('cumTSR')">Cumul. TSR</th>
+            <th data-col="annTSR" onclick="App.sortTable('annTSR')">Annual. TSR</th>
+            <th data-col="vsSub" onclick="App.sortTable('vsSub')">vs. Subject</th>
+            <th data-col="pctl" onclick="App.sortTable('pctl')">Percentile</th>
+          </tr></thead>
+          <tbody id="dtable-body"></tbody>
+        </table>
+        <div class="tbl-export"><button class="exp-btn" onclick="App.exportCSV()">Export to CSV</button></div>
+      </div>
+    </div>
+
+  </main><!-- /dashboard -->
+</div><!-- /app-layout -->
+
+<footer id="app-footer">
+  <span>Prepared by Semler Brossy Consulting Group</span>
+  <span id="footer-data">Price data sourced from Yahoo Finance</span>
+  <span id="footer-right"></span>
+</footer>
+
+<div id="loading-overlay" class="hidden">
+  <div class="spin"></div>
+  <div class="load-txt" id="load-txt">Loading data...</div>
+  <div class="load-prog" id="load-prog"></div>
+</div>
+
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  var b = document.getElementById('error-banner');
+  if (b) { b.style.display='block'; b.textContent = 'JS Error: ' + msg + ' (line ' + line + ')'; }
+};
+// ============================================================
+// INDEX CONSTITUENT DATA  (static, S&P 500 as of late 2024)
+// ============================================================
+const INDEX_DATA = {
+  GICS_IT:['AAPL','MSFT','NVDA','AVGO','ORCL','CRM','AMD','CSCO','IBM','INTU','QCOM','TXN','NOW','ADBE','AMAT','LRCX','ADI','MU','KLAC','SNPS','CDNS','PANW','FTNT','MCHP','HPQ','HPE','GLW','IT','CDW','AKAM','VRSN','NTAP','KEYS','PTC','TRMB','ZBRA','MSI','ANSS','APH','TEL','MPWR','GDDY','CTSH','DXC','FFIV','JNPR','HPE','WDC','STX','ENPH'],
+  GICS_HC:['UNH','JNJ','LLY','ABT','MRK','TMO','ABBV','AMGN','GILD','BMY','DHR','CVS','MCK','CI','HUM','ELV','CNC','DGX','LH','ISRG','BSX','SYK','MDT','ZBH','MTD','IQV','IDXX','ILMN','REGN','VRTX','BIIB','RMD','PODD','XRAY','ZTS','WAT','EW','BDX','BAX','HCA','DXCM','A','HSIC','CAH','ABC','PKI','HOLX','ALGN','INCY','BIO','CTLT','MRNA','PFE'],
+  GICS_FIN:['JPM','BAC','WFC','GS','MS','BLK','AXP','COF','USB','PNC','TFC','STT','BK','CME','ICE','NDAQ','MCO','SPGI','AFL','AON','CB','HIG','L','LNC','MET','MMC','PGR','PRU','RE','TRV','SCHW','ALL','AMP','BRO','FNF','CINF','RF','CFG','MTB','FITB','HBAN','KEY','ZION','CMA','WRB','MKL','ERIE','RJF','AJG'],
+  GICS_IND:['BA','GE','HON','CAT','RTX','LMT','NOC','GD','MMM','TDG','EMR','ETN','ITW','PH','ROK','CMI','CARR','OTIS','XYL','AME','GNRC','HUBB','IEX','JCI','LII','NDSN','SNA','TXT','VRSK','WAB','ALLE','AOS','WCC','UNP','CSX','NSC','UPS','FDX','JBHT','EXPD','CHRW','GWW','PNR','FLR','PWR','J','LDOS','SAIC','BAH','CTAS','RSG','WM','ROP','FAST','GGG','IR','DOV'],
+  GICS_CD:['AMZN','TSLA','HD','MCD','NKE','LOW','SBUX','TJX','GM','F','BKNG','CMG','ORLY','AZO','APTV','BBY','ROST','DG','DLTR','HLT','MAR','YUM','DPZ','RCL','LVS','MGM','RL','PVH','TPR','HAS','MHK','WHR','LKQ','ETSY','EBAY','GPC','PHM','DHI','LEN','NVR','TOL','W','EXPE','ABNB','DKNG','VFC'],
+  GICS_CS:['WMT','COST','PG','KO','PEP','PM','MO','MDLZ','CL','GIS','KMB','HSY','MKC','K','KHC','CAG','SJM','HRL','CLX','CHD','EL','KR','STZ','TAP','MNST','SYY','TSN','ADM','BG','INGR','POST'],
+  GICS_ENE:['XOM','CVX','COP','SLB','EOG','MPC','PSX','VLO','PXD','DVN','FANG','EQT','HAL','BKR','OXY','APA','CTRA','MRO','NOV','WHD','HES','MRO','TRGP','LNG','KMI','OKE','WMB'],
+  GICS_UTL:['NEE','DUK','SO','AEP','EXC','SRE','PEG','ES','XEL','WEC','CMS','ED','ETR','FE','NI','PNW','PPL','DTE','PCG','AEE','CNP','EIX','D','AES'],
+  GICS_MAT:['LIN','APD','PPG','ECL','SHW','NEM','FCX','CF','MOS','IP','PKG','SEE','ALB','AVY','BALL','CE','EMN','FMC','IFF','LYB','MLM','OLN','SON','VMC','WLK','NUE','STLD','ATI','MP'],
+  GICS_RE:['AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WELL','EQR','AVB','VTR','BXP','FRT','HST','KIM','PEAK','WY','SBA','UDR','CPT','MAA','ESS','ARE','EXR','CUBE','NNN','WPC','VICI','GLPI','SBAC'],
+  GICS_COM:['GOOGL','GOOG','META','NFLX','DIS','CMCSA','CHTR','T','VZ','TMUS','EA','TTWO','WBD','IPG','OMC','NWS','NWSA','FOXA','FOX','PARA','LUMN','MTCH','IAC','PINS','SNAP','SPOT'],
+  SP500:['AAPL','MSFT','AMZN','NVDA','GOOGL','GOOG','META','BRK-B','TSLA','UNH','LLY','JPM','XOM','JNJ','V','PG','MA','HD','CVX','MRK','AVGO','ABBV','COST','PEP','ADBE','KO','CSCO','MCD','WMT','ACN','CRM','BAC','ORCL','TMO','NEE','ABT','AMD','DHR','NKE','QCOM','PM','SPGI','TXN','HON','AMGN','LIN','BMY','IBM','LOW','RTX','UPS','ISRG','DE','INTU','GS','CAT','GILD','NOW','ELV','SBUX','PLD','BX','MS','AXP','REGN','MDLZ','CI','ADI','VRTX','MMC','PANW','BLK','ADP','BKNG','ZTS','T','SYK','MO','LRCX','AMAT','MU','GE','CB','TJX','SO','DUK','CME','NOC','GD','PNC','USB','MCO','SCHW','WFC','ETN','AON','F','GM','INTC','CL','TGT','EMR','ITW','FI','ICE','SLB','MSCI','TFC','MCK','ROP','MMM','PSA','NSC','ECL','APD','VLO','PH','MPC','EW','IQV','KLAC','SNPS','CDNS','HCA','CHTR','CMCSA','NFLX','DIS','VZ','TMUS','EA','TTWO','CMG','EXC','SRE','PEG','AEP','XEL','WELL','EQR','AVB','AMT','CCI','EQIX','DLR','SPG','O','PSX','COF','STZ','BSX','SHW','DHI','PHM','LEN','NEM','FCX','PPL','CNP','DTE','PCG','ED','ES','CARR','OTIS','XYL','AME','GNRC','HUBB','WAB','ITW','PH','ROK','FDX','JBHT','EXPD','CHRW','GWW','VRSK','FAST','CTAS','RSG','WM','ROP'],
+  SP400:['ACI','ATR','BECN','BLD','BRX','CABO','CBT','CIEN','CLF','CNX','COTY','CRI','CVLT','EHC','EME','EQT','EVR','EXLS','FLS','FNB','FULT','GNW','GNTX','GPI','HBI','HHC','HP','HRB','IART','IBP','INFA','ITT','JHG','KBR','KNX','KNSL','LKQ','LSTR','LTC','MDU','MHK','MLI','MMS','MTZ','NFG','NVT','NXST','OGE','OHI','OSK','PNFP','PSB','REXR','RGA','RHI','RITM','RPM','RRC','SAIC','SFM','SKX','SLM','SMAR','SNX','SSD','STAG','STE','STEP','SWX','TGNA','THO','TKR','TMHC','TNL','TOL','TPH','TPR','TRMK','TWI','TX','UHS','UMPQ','UMBF','UNF','URI','VIAV','VLY','WCC','WMS','WRLD','WSM','WTFC','XPO','YELP','YETI'],
+  SP600:['ACLS','ACM','ADUS','AGIO','AIN','ALEX','ALK','AMBC','AMCX','AMPH','AMNB','AMR','AMWD','APAM','AQST','ARE','ARW','ASGN','ASTE','ATNI','ATRC','ATTO','AVNS','AVNW','AXNX','AXSM','AZZ','BCPC','BFAM','BKH','BLKB','BNS','BOX','BOOT','BRKL','BRP','BTU','BUSE','CAL','CALM','CATY','CBSH','CCOI','CDRE','CHCO','CHDN','CHE','CHEF','CLFD','CLW','CMC','CMCO','CNMD','COHU','CONN','CPF','CRGY','CSWI','CTRE','CUTR','CWT','DCOM','DLB','DNOW','DORM','DXPE','EIG','ELME','EPRT','ESTA','EXP','FARO','FCFS','FCF','FCPT','FIZZ','FLGT','FLNC','FLO','FOUR','FRME','FULT','GDEN','GKOS','GLDD','HAFC','HALO','HAYN','HCSG','HCI','HEES','HI','HLIT','HOLX','HONE','HRMY','HTBK','HWKN']
+};
+
+// ============================================================
+// APP STATE
+// ============================================================
+const STATE = {
+  subject: { ticker: 'GWRE', name: 'Guidewire Software' },
+  peers: [
+    { ticker: 'NOW', name: 'ServiceNow' },
+    { ticker: 'PCTY', name: 'Paylocity' },
+    { ticker: 'PAYC', name: 'Paycom Software' },
+    { ticker: 'HUBS', name: 'HubSpot' },
+    { ticker: 'VEEV', name: 'Veeva Systems' },
+    { ticker: 'DDOG', name: 'Datadog' },
+    { ticker: 'MDB', name: 'MongoDB' },
+    { ticker: 'ZS', name: 'Zscaler' },
+    { ticker: 'CRWD', name: 'CrowdStrike' },
+    { ticker: 'SNOW', name: 'Snowflake' }
+  ],
+  benchmarks: [{ ticker: '^GSPC', name: 'S&P 500', active: true }],
+  periodPreset: '3Y',
+  startDate: null,
+  endDate: null,
+  startMethod: { type: 'avg', n: 20 },
+  endMethod: { type: 'single', n: 20 },
+  peerType: 'manual',
+  opts: {
+    totalReturn: true,
+    annualized: true,
+    showMedian: true,
+    showBand: true,
+    showBenchmark: true,
+    chartType: 'both',
+    peerDisplay: 'all'
+  },
+  cache: {},
+  fmpKey: 'gMRzlKYrH5djz43pFpL0JdHGDMhnN6Ic',  // Financial Modeling Prep API key
+  polygonKey: '',                                 // Polygon.io API key (unlimited calls on paid plan)
+  dataSource: null,         // 'preloaded' | 'fmp' | 'polygon' | 'yahoo' | 'demo'
+  sourcePreference: null,   // first source that worked — used to skip slow failed sources
+  results: null,
+  sortCol: 'rank',
+  sortDir: 1,
+  tableOpen: false
+};
+
+// ============================================================
+// UTILITIES
+// ============================================================
+const PEER_COLORS = ['#8899BB','#99AACC','#7788AA','#6677AA','#889999','#AABBB8','#9999AA','#BBBBCC','#AAAACC','#99AABB','#BBCCDD','#7799BB','#88AACC','#9BBBCC','#AACCDD','#CCDDEE','#8899AA','#99AABA','#AABBCC','#BBCCDD'];
+
+function fmt(v, decimals=1) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  const s = (v >= 0 ? '+' : '') + (v * 100).toFixed(decimals) + '%';
+  return s;
+}
+function fmtPpts(v) {
+  if (v === null || isNaN(v)) return '—';
+  return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + ' ppts';
+}
+function fmtPrice(v) {
+  if (!v || isNaN(v)) return '—';
+  return '$' + v.toFixed(2);
+}
+function ordinal(n) {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = typeof d === 'number' ? new Date(d) : new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtDateShort(d) {
+  const dt = typeof d === 'number' ? new Date(d) : new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+function dateToMs(dateStr) { return new Date(dateStr).getTime(); }
+function msToDateStr(ms) {
+  const d = new Date(ms);
+  return d.toISOString().split('T')[0];
+}
+function computePeriodDates(preset) {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let start;
+  if (preset === '1Y') start = new Date(end.getFullYear()-1, end.getMonth(), end.getDate());
+  else if (preset === '3Y') start = new Date(end.getFullYear()-3, end.getMonth(), end.getDate());
+  else if (preset === '5Y') start = new Date(end.getFullYear()-5, end.getMonth(), end.getDate());
+  else if (preset === 'YTD') start = new Date(end.getFullYear(), 0, 1);
+  else return null;
+  return { start: msToDateStr(start.getTime()), end: msToDateStr(end.getTime()) };
+}
+function median(arr) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a,b)=>a-b);
+  const m = Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+function percentile(arr, p) {
+  const s = [...arr].sort((a,b)=>a-b);
+  const idx = (p/100) * (s.length-1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return lo === hi ? s[lo] : s[lo] + (s[hi]-s[lo])*(idx-lo);
+}
+function calcPercentileRank(val, arr) {
+  const below = arr.filter(v => v < val).length;
+  return (below / arr.length) * 100;
+}
+
+// ============================================================
+// YAHOO FINANCE DATA LAYER
+// ============================================================
+
+// ---- Yahoo Finance JSON ----
+function buildYahooUrls(ticker) {
+  const sym = encodeURIComponent(ticker);
+  const yf = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6y&includeAdjustedClose=true`;
+  const yf2 = `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6y&includeAdjustedClose=true`;
+  return [
+    yf, yf2,
+    'https://corsproxy.io/?' + yf,
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(yf),
+  ];
+}
+
+function parseYahooJSON(json) {
+  const result = json?.chart?.result?.[0];
+  if (!result) return null;
+  const ts = result.timestamp;
+  if (!ts || !ts.length) return null;
+  const adjclose = result.indicators?.adjclose?.[0]?.adjclose;
+  const close = result.indicators?.quote?.[0]?.close;
+  const meta = result.meta || {};
+  const prices = (adjclose && adjclose.length === ts.length) ? adjclose : close;
+  const priceClose = close || prices;
+  const valid = ts.map((t, i) => ({
+    t: t * 1000, adj: prices?.[i] ?? null, cl: priceClose?.[i] ?? null
+  })).filter(d => d.adj !== null && !isNaN(d.adj) && d.adj > 0);
+  if (!valid.length) return null;
+  return {
+    name: meta.longName || meta.shortName || meta.symbol || '',
+    currency: meta.currency || 'USD',
+    timestamps: valid.map(d => d.t),
+    adjClose: valid.map(d => d.adj),
+    close: valid.map(d => d.cl !== null ? d.cl : d.adj)
+  };
+}
+
+// ---- Pre-loaded data files (GitHub Pages) ──────────────────────────────────
+// When hosted, the dashboard loads per-ticker JSON files built nightly by
+// build_data.py. IndexedDB caches them across sessions so returning users
+// get instant results with no network calls.
+
+const PRELOAD_BASE = window.location.protocol !== 'file:'
+  ? new URL('./data', window.location.href).href  // works on any web server
+  : null;                                          // disabled for file:// URLs
+
+// Minimal IndexedDB wrapper — stores {dates, prices, name, cachedAt} per ticker
+const PriceDB = {
+  _db: null,
+  async _open() {
+    if (this._db) return this._db;
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('tsr-prices', 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore('prices');
+      r.onsuccess = e => { this._db = e.target.result; res(this._db); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async get(ticker) {
+    try {
+      const db = await this._open();
+      return new Promise((res, rej) => {
+        const req = db.transaction('prices','readonly').objectStore('prices').get(ticker);
+        req.onsuccess = () => res(req.result || null);
+        req.onerror = () => rej(req.error);
+      });
+    } catch(_) { return null; }
+  },
+  async set(ticker, data) {
+    try {
+      const db = await this._open();
+      return new Promise((res, rej) => {
+        const tx = db.transaction('prices','readwrite');
+        tx.objectStore('prices').put({...data, cachedAt: Date.now()}, ticker);
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    } catch(_) {}
+  },
+  isStale(entry) {
+    if (!entry) return true;
+    return (Date.now() - (entry.cachedAt || 0)) > 23 * 3600 * 1000; // >23h old
+  }
+};
+
+function parsePreloadedData(json, ticker) {
+  if (!json?.dates?.length || !json?.prices?.length)
+    throw new Error('invalid preloaded data for ' + ticker);
+  return {
+    ticker, name: json.name || ticker, currency: 'USD',
+    timestamps: json.dates.map(d => new Date(d + 'T00:00:00').getTime()),
+    adjClose: json.prices,
+    close: json.prices,
+    source: 'preloaded'
+  };
+}
+
+async function fetchPreloaded(ticker) {
+  if (!PRELOAD_BASE) throw new Error('preloaded unavailable (file:// URL)');
+
+  // 1. Check IndexedDB — instant if cached and fresh
+  const cached = await PriceDB.get(ticker);
+  if (cached && !PriceDB.isStale(cached)) return parsePreloadedData(cached, ticker);
+
+  // 2. Fetch from the nightly-built data file
+  const url = `${PRELOAD_BASE}/prices/${encodeURIComponent(ticker)}.json`;
+  const res = await fetchWithTimeout(url, 10000);
+  if (!res.ok) throw new Error(`no preloaded file for ${ticker}`);
+  const json = await res.json();
+
+  // 3. Cache in IndexedDB for next session
+  await PriceDB.set(ticker, json);
+  return parsePreloadedData(json, ticker);
+}
+
+// ---- Financial Modeling Prep (FMP) — adj-close, CORS-friendly ----
+function toFmpTicker(ticker) {
+  const map = { '^GSPC': 'SPY', '^RUT': 'IWM', '^IXIC': 'QQQ', '^DJI': 'DIA', '^MID': 'MDY' };
+  return map[ticker.toUpperCase()] || ticker;
+}
+
+function parseFMPJson(json, ticker) {
+  if (json['Error Message'] || json.error) throw new Error(json['Error Message'] || json.error);
+  const hist = json?.historical;
+  if (!hist || !hist.length) throw new Error('no data for ' + ticker);
+  const sorted = [...hist].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const valid = sorted.filter(d => d.adjClose != null && d.adjClose > 0);
+  if (!valid.length) throw new Error('no valid adj-close');
+  return {
+    ticker, name: json.symbol || ticker, currency: 'USD',
+    timestamps: valid.map(d => new Date(d.date + 'T00:00:00').getTime()),
+    adjClose: valid.map(d => d.adjClose),
+    close: valid.map(d => d.close || d.adjClose),
+    source: 'fmp'
+  };
+}
+
+function buildFmpDirectUrl(ticker) {
+  const sym = encodeURIComponent(toFmpTicker(ticker));
+  const today = new Date().toISOString().split('T')[0];
+  return `https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?from=2015-01-01&to=${today}&apikey=${STATE.fmpKey}`;
+}
+
+// Returns list of proxy URLs for a given direct URL — spreads load across multiple proxies
+function buildProxyUrls(directUrl) {
+  const enc = encodeURIComponent(directUrl);
+  return [
+    'https://corsproxy.io/?' + directUrl,
+    'https://api.allorigins.win/raw?url=' + enc,
+    'https://api.codetabs.com/v1/proxy?quest=' + enc,
+    'https://thingproxy.freeboard.io/fetch/' + directUrl,
+  ];
+}
+
+// Race all proxies in parallel — returns first valid JSON response
+async function fetchViaProxies(directUrl, timeoutMs) {
+  const proxyUrls = buildProxyUrls(directUrl);
+  return new Promise((resolve, reject) => {
+    let settled = false, pending = proxyUrls.length;
+    for (const url of proxyUrls) {
+      fetchWithTimeout(url, timeoutMs)
+        .then(async res => {
+          if (settled || !res.ok) { pending--; if (!pending && !settled) reject(new Error('all proxies failed')); return; }
+          try {
+            const json = await res.json();
+            if (!settled) { settled = true; resolve(json); }
+          } catch(_) { pending--; if (!pending && !settled) reject(new Error('parse failed')); }
+        })
+        .catch(() => { pending--; if (!pending && !settled) reject(new Error('all proxies failed')); });
+    }
+  });
+}
+
+async function fetchFMP(ticker) {
+  if (!STATE.fmpKey) throw new Error('no FMP key');
+  const directUrl = buildFmpDirectUrl(ticker);
+
+  // 1. Try direct first (works when served from localhost or if FMP allows the origin)
+  try {
+    const res = await fetchWithTimeout(directUrl, 5000);
+    if (res.ok) {
+      const json = await res.json();
+      const errMsg = (json['Error Message'] || json.error || '').toString();
+      if (errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('upgrade')) {
+        const e = new Error('FMP_RATE_LIMITED'); e.rateLimited = true; throw e;
+      }
+      return parseFMPJson(json, ticker);
+    }
+  } catch(e) { if (e.rateLimited) throw e; }
+
+  // 2. Race all proxies in parallel — uses whichever responds first
+  try {
+    const json = await fetchViaProxies(directUrl, 9000);
+    const errMsg = (json['Error Message'] || json.error || '').toString();
+    if (errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('upgrade')) {
+      const e = new Error('FMP_RATE_LIMITED'); e.rateLimited = true; throw e;
+    }
+    return parseFMPJson(json, ticker);
+  } catch(e) { if (e.rateLimited) throw e; }
+
+  throw new Error('FMP failed for ' + ticker);
+}
+
+// FMP batch fetch — fetches multiple tickers in ONE API call (requires FMP paid plan)
+async function fetchFMPBatch(tickers) {
+  if (!STATE.fmpKey || !tickers.length) return {};
+  const fmpTickers = tickers.map(toFmpTicker);
+  const sym = fmpTickers.join(',');
+  const today = new Date().toISOString().split('T')[0];
+  const batchUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?from=2015-01-01&to=${today}&apikey=${STATE.fmpKey}`;
+
+  const tryParse = (json) => {
+    if (!json || json['Error Message'] || json.error) return {};
+    const results = {};
+    const list = json.historicalStockList
+      || (json.historical ? [{ symbol: json.symbol || fmpTickers[0], historical: json.historical }] : []);
+    for (const item of list) {
+      const fmpIdx = fmpTickers.findIndex(t => t.toUpperCase() === (item.symbol || '').toUpperCase());
+      const origTicker = fmpIdx >= 0 ? tickers[fmpIdx] : item.symbol;
+      try { results[origTicker] = parseFMPJson(item, origTicker); } catch(_) {}
+    }
+    return results;
+  };
+
+  // Try direct first
+  try {
+    const res = await fetchWithTimeout(batchUrl, 12000);
+    if (res.ok) { const r = tryParse(await res.json()); if (Object.keys(r).length) return r; }
+  } catch(_) {}
+
+  // Race proxies
+  try {
+    const json = await fetchViaProxies(batchUrl, 15000);
+    const r = tryParse(json);
+    if (Object.keys(r).length) return r;
+  } catch(_) {}
+
+  return {};
+}
+
+// ---- Polygon.io — adj-close, unlimited calls on paid plan, strong CORS support ----
+function toPolygonTicker(ticker) {
+  // Map index tickers to ETFs (avoids needing Polygon's indices add-on)
+  const map = { '^GSPC': 'SPY', '^RUT': 'IWM', '^IXIC': 'QQQ', '^DJI': 'DIA', '^MID': 'MDY' };
+  return map[ticker.toUpperCase()] || ticker;
+}
+
+function parsePolygonJson(json, ticker) {
+  if (json.status === 'ERROR' || json.error) throw new Error(json.error || 'Polygon error');
+  const results = json.results;
+  if (!results || !results.length) throw new Error('no polygon data for ' + ticker);
+  const sorted = [...results].sort((a, b) => a.t - b.t);
+  const valid = sorted.filter(d => d.c != null && d.c > 0);
+  if (!valid.length) throw new Error('no valid polygon prices');
+  return {
+    ticker, name: ticker, currency: 'USD',
+    timestamps: valid.map(d => d.t),   // already in ms
+    adjClose: valid.map(d => d.c),     // adjusted close when fetched with adjusted=true
+    close: valid.map(d => d.c),
+    source: 'polygon'
+  };
+}
+
+async function fetchPolygon(ticker) {
+  if (!STATE.polygonKey) throw new Error('no polygon key');
+  const sym = encodeURIComponent(toPolygonTicker(ticker));
+  const today = new Date().toISOString().split('T')[0];
+  const url = `https://api.polygon.io/v2/aggs/ticker/${sym}/range/1/day/2015-01-01/${today}?adjusted=true&sort=asc&limit=50000&apikey=${STATE.polygonKey}`;
+
+  // Direct first — Polygon has proper CORS headers on all plans
+  try {
+    const res = await fetchWithTimeout(url, 8000);
+    if (res.ok) return parsePolygonJson(await res.json(), ticker);
+  } catch(_) {}
+
+  // Proxy fallback for file:// null-origin
+  try {
+    const json = await fetchViaProxies(url, 10000);
+    return parsePolygonJson(json, ticker);
+  } catch(_) {}
+
+  throw new Error('Polygon failed for ' + ticker);
+}
+
+
+// ---- Yahoo Finance CSV (paste/upload) ----
+function parseYahooCSV(csvText, ticker, name) {
+  const lines = csvText.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return null;
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, ''));
+  const di = header.findIndex(h => h === 'date');
+  const ai = header.findIndex(h => h.includes('adj'));
+  const ci = header.findIndex(h => h === 'close');
+  if (di < 0 || (ai < 0 && ci < 0)) return null;
+  const pi = ai >= 0 ? ai : ci;
+  const valid = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',');
+    if (cols.length <= pi) continue;
+    const t = new Date(cols[di]?.trim()).getTime();
+    const adj = parseFloat(cols[pi]);
+    const cl = parseFloat(cols[ci >= 0 ? ci : pi]);
+    if (isNaN(t) || isNaN(adj) || adj <= 0) continue;
+    valid.push({ t, adj, cl: isNaN(cl) ? adj : cl });
+  }
+  if (!valid.length) return null;
+  valid.sort((a, b) => a.t - b.t);
+  return {
+    ticker, name: name || ticker, currency: 'USD',
+    timestamps: valid.map(d => d.t),
+    adjClose: valid.map(d => d.adj),
+    close: valid.map(d => d.cl)
+  };
+}
+
+// ---- Core fetch helpers ----
+async function fetchWithTimeout(url, ms = 8000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  try { return await fetch(url, { signal: ctrl.signal }); }
+  finally { clearTimeout(tid); }
+}
+
+async function fetchTicker(ticker) {
+  if (STATE.cache[ticker]) return STATE.cache[ticker];
+
+  // If a working source was already found for this session, use it first
+  const pref = STATE.sourcePreference;
+
+  // 0. Pre-loaded data file (fastest — no API call)
+  if (PRELOAD_BASE) {
+    try {
+      const data = await fetchPreloaded(ticker);
+      STATE.cache[ticker] = data;
+      STATE.dataSource = STATE.dataSource || 'preloaded';
+      return data;
+    } catch(_) {}
+  }
+
+  // 1. FMP — adj close, true TSR
+  if (STATE.fmpKey && pref !== 'yahoo' && pref !== 'polygon') {
+    try {
+      const data = await fetchFMP(ticker);
+      STATE.cache[ticker] = data;
+      STATE.dataSource = STATE.dataSource || 'fmp';
+      STATE.sourcePreference = 'fmp';
+      return data;
+    } catch(e) { if (e && e.rateLimited) { /* fall through to Polygon */ } }
+  }
+
+  // 2. Polygon — adj close, true TSR, unlimited calls on paid plan
+  if (STATE.polygonKey && pref !== 'yahoo') {
+    try {
+      const data = await fetchPolygon(ticker);
+      STATE.cache[ticker] = data;
+      STATE.dataSource = STATE.dataSource || 'polygon';
+      STATE.sourcePreference = 'polygon';
+      return data;
+    } catch(_) {}
+  }
+
+  // 3. Yahoo Finance direct + CORS proxies (adj close). Short timeouts.
+  for (const url of buildYahooUrls(ticker)) {
+    try {
+      const res = await fetchWithTimeout(url, 4000);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const parsed = parseYahooJSON(json);
+      if (!parsed) continue;
+      const data = { ticker, ...parsed, source: 'yahoo' };
+      STATE.cache[ticker] = data;
+      STATE.dataSource = STATE.dataSource || 'yahoo';
+      STATE.sourcePreference = 'yahoo';
+      return data;
+    } catch (_) {}
+  }
+
+  throw new Error('All sources failed for ' + ticker);
+}
+
+async function fetchAll() {
+  const allTickers = getAllTickers().filter(t => !STATE.cache[t]);
+  if (!allTickers.length) return 0;
+  const total = allTickers.length;
+  let succeeded = 0;
+  showFetchProgress(true, `Fetching ${total} tickers…`, 0);
+
+  // 0. Pre-loaded data files — fastest, no API calls (requires hosted deployment)
+  if (PRELOAD_BASE) {
+    showFetchProgress(true, 'Loading from pre-built data files…', 5);
+    const preloadResults = await Promise.allSettled(allTickers.map(t => fetchPreloaded(t)));
+    preloadResults.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        STATE.cache[allTickers[i]] = r.value;
+        succeeded++;
+      }
+    });
+    if (succeeded > 0) {
+      STATE.dataSource = 'preloaded';
+      STATE.sourcePreference = 'preloaded';
+    }
+    showFetchProgress(true, `Loaded ${succeeded}/${total} from data files…`, Math.round(succeeded / total * 80));
+  }
+
+  // 1. FMP batch fetch — all tickers in 1-2 API calls (no rate limit issues)
+  if (STATE.fmpKey) {
+    const BATCH = 10; // batch up to 10 tickers per FMP call
+    const numBatches = Math.ceil(allTickers.length / BATCH);
+    for (let i = 0; i < allTickers.length; i += BATCH) {
+      const batch = allTickers.slice(i, i + BATCH);
+      const batchNum = Math.floor(i / BATCH) + 1;
+      showFetchProgress(true,
+        numBatches > 1 ? `Fetching batch ${batchNum}/${numBatches}…` : 'Fetching all tickers…',
+        Math.round(i / allTickers.length * 85));
+      const batchResults = await fetchFMPBatch(batch);
+      for (const [t, data] of Object.entries(batchResults)) {
+        STATE.cache[t] = data;
+        succeeded++;
+      }
+      if (i + BATCH < allTickers.length) await new Promise(r => setTimeout(r, 500));
+    }
+    if (succeeded > 0) {
+      STATE.dataSource = 'fmp';
+      STATE.sourcePreference = 'fmp';
+    }
+    showFetchProgress(true, `Loaded ${succeeded}/${total} tickers…`, Math.round(succeeded / total * 90));
+  }
+
+  // 2. Polygon parallel fetch for any still missing (unlimited calls — no rate limit concerns)
+  const afterFmp = allTickers.filter(t => !STATE.cache[t]);
+  if (afterFmp.length && STATE.polygonKey) {
+    showFetchProgress(true, `Fetching ${afterFmp.length} tickers via Polygon…`, Math.round(succeeded / total * 90));
+    const polygonResults = await Promise.allSettled(afterFmp.map(t => fetchPolygon(t)));
+    polygonResults.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        STATE.cache[afterFmp[i]] = r.value;
+        STATE.dataSource = STATE.dataSource || 'polygon';
+        STATE.sourcePreference = STATE.sourcePreference || 'polygon';
+        succeeded++;
+      }
+    });
+    showFetchProgress(true, `Loaded ${succeeded}/${total} tickers…`, Math.round(succeeded / total * 95));
+  }
+
+  // 3. Sequential fallback (Yahoo) for any still missing
+  //    Each ticker races 4 proxies in parallel so individual proxy rate limits are spread.
+  const remaining = allTickers.filter(t => !STATE.cache[t]);
+  if (remaining.length) {
+    let done = succeeded;
+    let delay = 800;
+    for (const t of remaining) {
+      try {
+        await fetchTicker(t);
+        succeeded++;
+        delay = Math.max(600, delay * 0.9);
+      } catch(e) {
+        if (e && e.rateLimited) delay = Math.min(8000, delay * 2.5);
+      }
+      done++;
+      showFetchProgress(true, `Fetching ${t}… (${done}/${total})`, Math.round(done / total * 100));
+      if (done < total) await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  showFetchProgress(false);
+  return succeeded;
+}
+
+// ---- Demo / Synthetic Data Generator ----
+// Generates deterministic realistic price series with no network required.
+// Used as fallback when all API sources are blocked.
+function seededRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = Math.imul(1664525, s) + 1013904223 >>> 0;
+    return s / 4294967296;
+  };
+}
+function randNormal(rng) {
+  // Box-Muller
+  let u, v;
+  do { u = rng(); } while (u === 0);
+  v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function buildTradingDays(startMs, endMs) {
+  const days = [];
+  const d = new Date(startMs);
+  while (d.getTime() <= endMs) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) days.push(d.getTime());
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
+}
+function generatePriceSeries(startPrice, annReturn, vol, timestamps, seed) {
+  const rng = seededRng(seed);
+  const dt = 1 / 252;
+  const mu = (annReturn - 0.5 * vol * vol) * dt;
+  const sigma = vol * Math.sqrt(dt);
+  const prices = [startPrice];
+  for (let i = 1; i < timestamps.length; i++) {
+    prices.push(prices[i-1] * Math.exp(mu + sigma * randNormal(rng)));
+  }
+  return prices;
+}
+
+const DEMO_SPECS = [
+  { ticker:'GWRE',  name:'Guidewire Software',  price:72,   ret:0.14, vol:0.32, seed:1001 },
+  { ticker:'NOW',   name:'ServiceNow',           price:450,  ret:0.26, vol:0.26, seed:1002 },
+  { ticker:'PCTY',  name:'Paylocity',            price:155,  ret:0.06, vol:0.34, seed:1003 },
+  { ticker:'PAYC',  name:'Paycom Software',      price:290,  ret:-0.08,vol:0.36, seed:1004 },
+  { ticker:'HUBS',  name:'HubSpot',              price:310,  ret:0.18, vol:0.38, seed:1005 },
+  { ticker:'VEEV',  name:'Veeva Systems',        price:195,  ret:0.09, vol:0.26, seed:1006 },
+  { ticker:'DDOG',  name:'Datadog',              price:108,  ret:0.16, vol:0.44, seed:1007 },
+  { ticker:'MDB',   name:'MongoDB',              price:210,  ret:0.19, vol:0.50, seed:1008 },
+  { ticker:'ZS',    name:'Zscaler',              price:148,  ret:0.22, vol:0.44, seed:1009 },
+  { ticker:'CRWD',  name:'CrowdStrike',          price:155,  ret:0.31, vol:0.44, seed:1010 },
+  { ticker:'SNOW',  name:'Snowflake',            price:205,  ret:0.03, vol:0.54, seed:1011 },
+  { ticker:'^GSPC', name:'S&P 500',              price:4050, ret:0.10, vol:0.15, seed:1012 },
+];
+
+function loadDemoData() {
+  STATE.dataSource = 'demo';
+  const endMs = Date.now();
+  const startMs = endMs - 3 * 365.25 * 86400000;
+  const timestamps = buildTradingDays(startMs, endMs);
+  DEMO_SPECS.forEach(spec => {
+    const prices = generatePriceSeries(spec.price, spec.ret, spec.vol, timestamps, spec.seed);
+    STATE.cache[spec.ticker] = {
+      ticker: spec.ticker, name: spec.name, currency: 'USD',
+      timestamps: [...timestamps], adjClose: prices, close: [...prices], isDemo: true
+    };
+  });
+  // Sync peer names from demo specs
+  STATE.peers.forEach(p => {
+    const spec = DEMO_SPECS.find(s => s.ticker === p.ticker);
+    if (spec) p.name = spec.name;
+  });
+  STATE.subject.name = DEMO_SPECS[0].name;
+  document.getElementById('c-subject-name').value = STATE.subject.name;
+}
+
+function getAllTickers() {
+  const set = new Set();
+  set.add(STATE.subject.ticker.toUpperCase());
+  STATE.peers.forEach(p => set.add(p.ticker.toUpperCase()));
+  if (STATE.opts.showBenchmark) {
+    STATE.benchmarks.filter(b => b.active).forEach(b => set.add(b.ticker));
+  }
+  return [...set];
+}
+
+function showFetchProgress(show, text='', pct=0) {
+  const el = document.getElementById('fetch-progress');
+  el.style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('fp-text').textContent = text;
+    document.getElementById('fp-fill').style.width = pct + '%';
+  }
+}
+
+// ============================================================
+// TSR CALCULATION ENGINE
+// ============================================================
+function resolvePrice(data, targetMs, method) {
+  const { timestamps, adjClose, close } = data;
+  const prices = STATE.opts.totalReturn ? adjClose : close;
+  // Find nearest trading day on or before targetMs (with up to 7-day lookback)
+  let endIdx = -1;
+  const window7 = 7 * 86400000;
+  for (let i = timestamps.length - 1; i >= 0; i--) {
+    if (timestamps[i] <= targetMs + 86400000) { endIdx = i; break; }
+  }
+  if (endIdx < 0) return null;
+  // Also verify not too far off
+  if (targetMs - timestamps[endIdx] > window7) return null;
+
+  if (method.type === 'single') {
+    return prices[endIdx] || null;
+  } else {
+    const n = method.n || 20;
+    const startIdx = Math.max(0, endIdx - n + 1);
+    const window = prices.slice(startIdx, endIdx + 1).filter(p => p !== null && !isNaN(p));
+    if (!window.length) return null;
+    return window.reduce((a, b) => a + b, 0) / window.length;
+  }
+}
+
+function resolvePriceWindow(data, targetMs, method) {
+  // Returns {price, windowStart, windowEnd} for audit tooltip
+  const { timestamps } = data;
+  let endIdx = -1;
+  for (let i = timestamps.length - 1; i >= 0; i--) {
+    if (timestamps[i] <= targetMs + 86400000) { endIdx = i; break; }
+  }
+  if (endIdx < 0) return null;
+  const n = method.type === 'avg' ? (method.n || 20) : 1;
+  const startIdx = Math.max(0, endIdx - n + 1);
+  const price = resolvePrice(data, targetMs, method);
+  return {
+    price,
+    windowStart: timestamps[startIdx],
+    windowEnd: timestamps[endIdx],
+    count: endIdx - startIdx + 1
+  };
+}
+
+function calcTSR(data, startMs, endMs) {
+  const startPrice = resolvePrice(data, startMs, STATE.startMethod);
+  const endPrice = resolvePrice(data, endMs, STATE.endMethod);
+  if (!startPrice || !endPrice) return null;
+  const cumTSR = endPrice / startPrice - 1;
+  const days = (endMs - startMs) / 86400000;
+  const years = days / 365.25;
+  const annTSR = years > 0 ? (Math.pow(1 + cumTSR, 1 / years) - 1) : cumTSR;
+  return { startPrice, endPrice, cumTSR, annTSR, years };
+}
+
+function getActiveTSR(result) {
+  if (!result) return null;
+  return STATE.opts.annualized ? result.annTSR : result.cumTSR;
+}
+
+function generateIndexedSeries(data, startMs, endMs, startPrice) {
+  if (!startPrice) return [];
+  const { timestamps } = data;
+  const prices = STATE.opts.totalReturn ? data.adjClose : data.close;
+  const pts = [];
+  for (let i = 0; i < timestamps.length; i++) {
+    const t = timestamps[i];
+    if (t < startMs - 86400000 || t > endMs + 86400000) continue;
+    const p = prices[i];
+    if (p === null || isNaN(p)) continue;
+    pts.push({ x: t, y: (p / startPrice) * 100 });
+  }
+  return pts;
+}
+
+function calculateAll() {
+  const { startDate, endDate } = getActiveDates();
+  const startMs = dateToMs(startDate);
+  const endMs = dateToMs(endDate);
+  const results = {};
+
+  // Subject
+  const subData = STATE.cache[STATE.subject.ticker.toUpperCase()];
+  if (subData) {
+    results[STATE.subject.ticker] = {
+      ...calcTSR(subData, startMs, endMs),
+      name: STATE.subject.name,
+      ticker: STATE.subject.ticker,
+      isSubject: true
+    };
+  }
+
+  // Peers
+  STATE.peers.forEach(p => {
+    const data = STATE.cache[p.ticker.toUpperCase()];
+    if (data) {
+      const r = calcTSR(data, startMs, endMs);
+      if (r) results[p.ticker] = { ...r, name: p.name || data.name, ticker: p.ticker };
+    }
+  });
+
+  // Benchmarks
+  STATE.benchmarks.filter(b => b.active).forEach(b => {
+    const data = STATE.cache[b.ticker];
+    if (data) {
+      const r = calcTSR(data, startMs, endMs);
+      if (r) results[b.ticker] = { ...r, name: b.name, ticker: b.ticker, isBenchmark: true };
+    }
+  });
+
+  // Percentile ranks (among peers only)
+  const peerTSRs = STATE.peers
+    .map(p => results[p.ticker])
+    .filter(Boolean)
+    .map(r => getActiveTSR(r))
+    .filter(v => v !== null);
+
+  const subResult = results[STATE.subject.ticker];
+  if (subResult && peerTSRs.length) {
+    const subTSR = getActiveTSR(subResult);
+    subResult.percentile = calcPercentileRank(subTSR, peerTSRs);
+    subResult.rank = null; // set below
+  }
+
+  // Rank all (peers + subject)
+  const allForRank = [STATE.subject.ticker, ...STATE.peers.map(p => p.ticker)]
+    .map(t => results[t])
+    .filter(Boolean)
+    .filter(r => getActiveTSR(r) !== null);
+  allForRank.sort((a, b) => getActiveTSR(b) - getActiveTSR(a));
+  allForRank.forEach((r, i) => { r.rank = i + 1; });
+
+  // Also set percentile for each company
+  const allTSRs = allForRank.map(r => getActiveTSR(r));
+  allForRank.forEach(r => {
+    r.percentile = calcPercentileRank(getActiveTSR(r), allTSRs);
+  });
+
+  STATE.results = results;
+  return results;
+}
+
+function getActiveDates() {
+  if (STATE.periodPreset !== 'custom') {
+    const d = computePeriodDates(STATE.periodPreset);
+    if (d) return { startDate: d.start, endDate: d.end };
+  }
+  return { startDate: STATE.startDate, endDate: STATE.endDate };
+}
+
+// ============================================================
+// CHART MANAGEMENT
+// ============================================================
+const CHARTS = {};
+function destroyChart(id) { if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; } }
+
+function renderLineChart() {
+  if (typeof Chart === 'undefined') {
+    showError('Chart.js library failed to load. Check your internet connection and refresh the page.');
+    return;
+  }
+  destroyChart('line');
+  const { startDate, endDate } = getActiveDates();
+  const startMs = dateToMs(startDate);
+  const endMs = dateToMs(endDate);
+  const ctx = document.getElementById('line-chart').getContext('2d');
+  const datasets = [];
+  const subTkr = STATE.subject.ticker.toUpperCase();
+  const subData = STATE.cache[subTkr];
+  const results = STATE.results || {};
+
+  // Subject start price for indexing
+  const subStartPrice = results[STATE.subject.ticker]?.startPrice;
+
+  // Percentile reference lines (25th, 50th, 75th, 90th)
+  if (STATE.peers.length >= 4) {
+    const bandData = buildPercentileBandSeries(startMs, endMs);
+    if (bandData) {
+      // Shaded band between 25th and 75th
+      if (STATE.opts.showBand) {
+        datasets.push({
+          label: '75th Pctl', endLabel: '75th',
+          data: bandData.p75,
+          borderColor: 'rgba(0,131,199,0.35)', borderWidth: 1, borderDash: [4, 4],
+          pointRadius: 0, tension: 0.1, order: 4,
+          fill: '+1', backgroundColor: 'rgba(0,131,199,0.07)'
+        });
+        datasets.push({
+          label: '25th Pctl', endLabel: '25th',
+          data: bandData.p25,
+          borderColor: 'rgba(0,131,199,0.35)', borderWidth: 1, borderDash: [4, 4],
+          pointRadius: 0, tension: 0.1, order: 4,
+          fill: false
+        });
+      } else {
+        datasets.push({
+          label: '75th Pctl', endLabel: '75th',
+          data: bandData.p75,
+          borderColor: 'rgba(0,131,199,0.45)', borderWidth: 1, borderDash: [4, 4],
+          pointRadius: 0, tension: 0.1, order: 4
+        });
+        datasets.push({
+          label: '25th Pctl', endLabel: '25th',
+          data: bandData.p25,
+          borderColor: 'rgba(0,131,199,0.45)', borderWidth: 1, borderDash: [4, 4],
+          pointRadius: 0, tension: 0.1, order: 4
+        });
+      }
+      // 50th percentile (median)
+      if (STATE.opts.showMedian) {
+        datasets.push({
+          label: '50th (Median)', endLabel: 'Median',
+          data: bandData.p50,
+          borderColor: '#0083C7', borderWidth: 1.5, borderDash: [5, 3],
+          pointRadius: 0, tension: 0.1, order: 3
+        });
+      }
+      // 90th percentile line
+      datasets.push({
+        label: '90th Pctl', endLabel: '90th',
+        data: bandData.p90,
+        borderColor: 'rgba(0,36,82,0.55)', borderWidth: 1, borderDash: [2, 3],
+        pointRadius: 0, tension: 0.1, order: 4
+      });
+    }
+  }
+
+  // Benchmark lines
+  if (STATE.opts.showBenchmark) {
+    STATE.benchmarks.filter(b => b.active).forEach((b) => {
+      const data = STATE.cache[b.ticker];
+      const r = results[b.ticker];
+      if (!data || !r) return;
+      const pts = generateIndexedSeries(data, startMs, endMs, r.startPrice);
+      datasets.push({
+        label: b.name, endLabel: b.name,
+        data: pts,
+        borderColor: '#999999', borderWidth: 1.3, borderDash: [3, 3],
+        pointRadius: 0, tension: 0.1, order: 2
+      });
+    });
+  }
+
+  // Subject company (always on top, always labeled)
+  if (subData && subStartPrice) {
+    const pts = generateIndexedSeries(subData, startMs, endMs, subStartPrice);
+    datasets.push({
+      label: STATE.subject.ticker,
+      endLabel: STATE.subject.ticker,
+      data: pts,
+      borderColor: '#003A69', borderWidth: 2.5,
+      pointRadius: 0, tension: 0.1, order: 1
+    });
+  }
+
+  const methodText = buildMethodBadge();
+  document.getElementById('line-badge').textContent = methodText;
+  document.getElementById('line-sub').textContent =
+    `Base = 100 indexed to ${STATE.startMethod.type === 'avg' ? STATE.startMethod.n + '-day avg' : 'single-day'} start price · ${fmtDate(startMs)} – ${fmtDate(endMs)}`;
+
+  // Inline end-of-line label plugin — draws ticker/name at last data point
+  const endLabelPlugin = {
+    id: 'endLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return;
+      const positions = [];
+      chart.data.datasets.forEach((ds, i) => {
+        if (ds.hideEndLabel) return;
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden) return;
+        const visible = meta.data.filter(p => p && isFinite(p.x) && isFinite(p.y));
+        if (!visible.length) return;
+        const last = visible[visible.length - 1];
+        positions.push({
+          x: last.x, y: last.y,
+          label: ds.endLabel || ds.label,
+          color: ds.borderColor,
+          bold: ds.borderWidth >= 2.5
+        });
+      });
+      // Nudge overlapping labels apart (sort by y, push down if too close)
+      positions.sort((a, b) => a.y - b.y);
+      const MIN_GAP = 14;
+      for (let i = 1; i < positions.length; i++) {
+        if (positions[i].y < positions[i - 1].y + MIN_GAP) {
+          positions[i].y = positions[i - 1].y + MIN_GAP;
+        }
+      }
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      positions.forEach(({ x, y, label, color, bold }) => {
+        ctx.font = `${bold ? '700 ' : '400 '}11px Calibri, Inter, sans-serif`;
+        ctx.fillStyle = color;
+        ctx.fillText(label, x + 6, y);
+      });
+      ctx.restore();
+    }
+  };
+
+  CHARTS.line = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    plugins: [endLabelPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: { right: 88 } },
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: computeTimeUnit(startMs, endMs), tooltipFormat: 'MMM d, yyyy' },
+          grid: { color: '#F0F0F0' },
+          ticks: { color: '#999', font: { size: 11, family: "'Calibri', sans-serif" }, maxTicksLimit: 10 }
+        },
+        y: {
+          title: { display: true, text: 'Indexed Return (Base = 100)', color: '#999', font: { size: 11 } },
+          grid: { color: '#F0F0F0' },
+          ticks: { color: '#999', font: { size: 11 }, callback: v => v.toFixed(0) }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#002452',
+          titleColor: '#fff',
+          bodyColor: 'rgba(255,255,255,.85)',
+          padding: 10,
+          callbacks: {
+            label: c => {
+              const v = c.parsed.y;
+              if (c.dataset.label?.startsWith('_band')) return null;
+              return ` ${c.dataset.label}: ${v !== null ? v.toFixed(1) : '—'}`;
+            },
+            filter: item => !item.dataset.label?.startsWith('_band')
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildMedianSeries(startMs, endMs) {
+  // Get all peer timestamps in range, compute median index at each date
+  const peerDatasets = STATE.peers.map(p => {
+    const data = STATE.cache[p.ticker.toUpperCase()];
+    const r = STATE.results?.[p.ticker];
+    if (!data || !r?.startPrice) return null;
+    return { data, startPrice: r.startPrice };
+  }).filter(Boolean);
+  if (!peerDatasets.length) return [];
+
+  // Use subject timestamps as reference dates
+  const subData = STATE.cache[STATE.subject.ticker.toUpperCase()];
+  if (!subData) return [];
+  const refTimestamps = subData.timestamps.filter(t => t >= startMs - 86400000 && t <= endMs + 86400000);
+
+  return refTimestamps.map(t => {
+    const vals = peerDatasets.map(({ data, startPrice }) => {
+      const idx = findNearestIdx(data.timestamps, t);
+      if (idx < 0) return null;
+      const p = (STATE.opts.totalReturn ? data.adjClose : data.close)[idx];
+      return p ? (p / startPrice) * 100 : null;
+    }).filter(v => v !== null);
+    return { x: t, y: vals.length ? median(vals) : null };
+  }).filter(d => d.y !== null);
+}
+
+function buildPercentileBandSeries(startMs, endMs) {
+  const peerDatasets = STATE.peers.map(p => {
+    const data = STATE.cache[p.ticker.toUpperCase()];
+    const r = STATE.results?.[p.ticker];
+    if (!data || !r?.startPrice) return null;
+    return { data, startPrice: r.startPrice };
+  }).filter(Boolean);
+  if (peerDatasets.length < 4) return null;
+
+  const subData = STATE.cache[STATE.subject.ticker.toUpperCase()];
+  if (!subData) return null;
+  const refTimestamps = subData.timestamps.filter(t => t >= startMs - 86400000 && t <= endMs + 86400000);
+
+  const p25 = [], p50 = [], p75 = [], p90 = [];
+  refTimestamps.forEach(t => {
+    const vals = peerDatasets.map(({ data, startPrice }) => {
+      const idx = findNearestIdx(data.timestamps, t);
+      if (idx < 0) return null;
+      const p = (STATE.opts.totalReturn ? data.adjClose : data.close)[idx];
+      return p ? (p / startPrice) * 100 : null;
+    }).filter(v => v !== null);
+    if (vals.length >= 4) {
+      p25.push({ x: t, y: percentile(vals, 25) });
+      p50.push({ x: t, y: percentile(vals, 50) });
+      p75.push({ x: t, y: percentile(vals, 75) });
+      p90.push({ x: t, y: percentile(vals, 90) });
+    }
+  });
+  return { p25, p50, p75, p90 };
+}
+
+function findNearestIdx(timestamps, targetMs) {
+  let best = -1, bestDiff = Infinity;
+  for (let i = 0; i < timestamps.length; i++) {
+    const diff = Math.abs(timestamps[i] - targetMs);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  return bestDiff < 5 * 86400000 ? best : -1;
+}
+
+function computeTimeUnit(startMs, endMs) {
+  const days = (endMs - startMs) / 86400000;
+  if (days <= 90) return 'week';
+  if (days <= 730) return 'month';
+  return 'quarter';
+}
+
+function renderBarChart() {
+  destroyChart('bar');
+  const results = STATE.results;
+  if (!results) return;
+
+  const allItems = [
+    { ticker: STATE.subject.ticker, name: STATE.subject.name, isSubject: true },
+    ...STATE.peers.map(p => ({ ticker: p.ticker, name: p.name, isSubject: false }))
+  ].map(item => {
+    const r = results[item.ticker];
+    if (!r) return null;
+    const tsr = getActiveTSR(r);
+    return { ...item, tsr, rank: r.rank, pctl: r.percentile };
+  }).filter(Boolean).sort((a, b) => b.tsr - a.tsr);
+
+  if (!allItems.length) return;
+
+  const labels = allItems.map(d => d.ticker);
+  const values = allItems.map(d => d.tsr * 100);
+  const subTSR = results[STATE.subject.ticker] ? getActiveTSR(results[STATE.subject.ticker]) * 100 : null;
+  const colors = allItems.map(d => d.isSubject ? '#003A69' : (d.tsr >= 0 ? '#B3B2B1' : '#CCAAAA'));
+  const borderColors = allItems.map(d => d.isSubject ? '#002452' : 'transparent');
+
+  const barH = Math.max(300, allItems.length * 26 + 60);
+  document.getElementById('bar-wrap').style.height = barH + 'px';
+
+  const ctx = document.getElementById('bar-chart').getContext('2d');
+  const { startDate, endDate } = getActiveDates();
+  document.getElementById('bar-badge').textContent =
+    `${STATE.opts.annualized ? 'Annualized' : 'Cumulative'} · ${fmtDate(dateToMs(startDate))} – ${fmtDate(dateToMs(endDate))}`;
+
+  CHARTS.bar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderColor: borderColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {},
+        tooltip: {
+          backgroundColor: '#002452',
+          callbacks: {
+            label: ctx => {
+              const item = allItems[ctx.dataIndex];
+              return [
+                ` TSR: ${fmt(item.tsr)}`,
+                ` Rank: ${item.rank} of ${allItems.length}`,
+                ` Percentile: ${item.pctl !== undefined ? ordinal(Math.round(item.pctl)) : '—'}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: STATE.opts.annualized ? 'Annualized TSR (%)' : 'Cumulative TSR (%)', color: '#999', font: { size: 11 } },
+          grid: { color: '#F0F0F0' },
+          ticks: { color: '#999', font: { size: 11 }, callback: v => v.toFixed(0) + '%' }
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: ctx => allItems[ctx.index]?.isSubject ? '#003A69' : '#555',
+            font: ctx => ({ size: 11, weight: allItems[ctx.index]?.isSubject ? '700' : '400', family: "'Calibri', sans-serif" })
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderPercentileChart() {
+  destroyChart('pctl');
+  const results = STATE.results;
+  if (!results) return;
+  const { startDate, endDate } = getActiveDates();
+  const startMs = dateToMs(startDate);
+  const endMs = dateToMs(endDate);
+
+  const subData = STATE.cache[STATE.subject.ticker.toUpperCase()];
+  if (!subData) return;
+
+  const peerDatasets = STATE.peers.map(p => {
+    const data = STATE.cache[p.ticker.toUpperCase()];
+    const r = results[p.ticker];
+    if (!data || !r?.startPrice) return null;
+    return { data, startPrice: r.startPrice };
+  }).filter(Boolean);
+  if (!peerDatasets.length) return;
+
+  const subStartPrice = results[STATE.subject.ticker]?.startPrice;
+  if (!subStartPrice) return;
+
+  // Sample every ~5 trading days
+  const refTs = subData.timestamps.filter((t, i) => t >= startMs && t <= endMs && i % 5 === 0);
+  const pts = refTs.map(t => {
+    const subIdx = findNearestIdx(subData.timestamps, t);
+    if (subIdx < 0) return null;
+    const subP = (STATE.opts.totalReturn ? subData.adjClose : subData.close)[subIdx];
+    const subTSR = subP ? (subP / subStartPrice) - 1 : null;
+    if (subTSR === null) return null;
+
+    const peerTSRs = peerDatasets.map(({ data, startPrice }) => {
+      const idx = findNearestIdx(data.timestamps, t);
+      if (idx < 0) return null;
+      const p = (STATE.opts.totalReturn ? data.adjClose : data.close)[idx];
+      return p ? (p / startPrice) - 1 : null;
+    }).filter(v => v !== null);
+
+    if (!peerTSRs.length) return null;
+    return { x: t, y: calcPercentileRank(subTSR, peerTSRs) };
+  }).filter(Boolean);
+
+  if (!pts.length) return;
+
+  const ctx = document.getElementById('pctl-chart').getContext('2d');
+  CHARTS.pctl = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: STATE.subject.ticker + ' Percentile',
+        data: pts,
+        borderColor: '#003A69',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.2,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: computeTimeUnit(startMs, endMs), tooltipFormat: 'MMM d, yyyy' },
+          grid: { color: '#F0F0F0' },
+          ticks: { color: '#999', font: { size: 11 }, maxTicksLimit: 8 }
+        },
+        y: {
+          min: 0, max: 100,
+          title: { display: true, text: 'Percentile Rank', color: '#999', font: { size: 11 } },
+          grid: { color: ctx => [25,50,75].includes(ctx.tick.value) ? '#D0DCE8' : '#F0F0F0' },
+          ticks: {
+            color: '#999', font: { size: 11 },
+            callback: v => ordinal(v),
+            values: [0, 25, 50, 75, 100]
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#002452',
+          callbacks: { label: ctx => ` ${ordinal(Math.round(ctx.parsed.y))} percentile` }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updateKPIs() {
+  const results = STATE.results;
+  const sub = results?.[STATE.subject.ticker];
+  const peerTSRs = STATE.peers
+    .map(p => results?.[p.ticker])
+    .filter(Boolean)
+    .map(r => getActiveTSR(r))
+    .filter(v => v !== null);
+  const { startDate, endDate } = getActiveDates();
+  const label = STATE.opts.annualized ? 'Annualized' : 'Cumulative';
+  const peerN = peerTSRs.length;
+
+  const subTSR = sub ? getActiveTSR(sub) : null;
+  const med = peerTSRs.length ? median(peerTSRs) : null;
+  const vsMed = subTSR !== null && med !== null ? subTSR - med : null;
+  const pctl = sub?.percentile;
+
+  const el = id => document.getElementById(id);
+  el('kv-subject').textContent = subTSR !== null ? fmt(subTSR) : '—';
+  el('kv-subject').className = 'kpi-cell-val' + (subTSR > 0 ? ' pos' : subTSR < 0 ? ' neg' : '');
+  el('ks-subject').textContent = `${label} · ${fmtDate(dateToMs(startDate))} – ${fmtDate(dateToMs(endDate))}`;
+
+  if (pctl !== undefined && pctl !== null) {
+    el('kv-pctl').textContent = ordinal(Math.round(pctl));
+    el('pctl-fill').style.width = Math.round(pctl) + '%';
+    el('ks-pctl').textContent = `${peerN} peers`;
+  } else {
+    el('kv-pctl').textContent = '—';
+    el('pctl-fill').style.width = '0%';
+  }
+
+  el('kv-med').textContent = med !== null ? fmt(med) : '—';
+  el('ks-med').textContent = peerN > 0 ? `${peerN} peers · ${label}` : '';
+
+  el('kv-vmed').textContent = vsMed !== null ? fmtPpts(vsMed) : '—';
+  el('kv-vmed').className = 'kpi-cell-val' + (vsMed > 0 ? ' pos' : vsMed < 0 ? ' neg' : '');
+  el('ks-vmed').textContent = 'vs. peer median';
+
+  el('meth-badge').textContent = buildMethodBadge();
+
+  // Header
+  el('hdr-ticker').textContent = STATE.subject.ticker;
+  el('hdr-name').textContent = STATE.subject.name;
+  const pd = computePeriodDates(STATE.periodPreset) || { startDate: STATE.startDate, endDate: STATE.endDate };
+  const periodLabel = STATE.periodPreset !== 'custom' ? STATE.periodPreset + ' TSR' : 'Custom Period TSR';
+  el('hdr-period').textContent = `${periodLabel} · ${fmtDate(dateToMs(pd.startDate || pd.start))} – ${fmtDate(dateToMs(pd.endDate || pd.end))}`;
+
+  // Footer
+  const lastTicker = STATE.subject.ticker;
+  const lastData = STATE.cache[lastTicker.toUpperCase()];
+  const lastPrice = lastData ? lastData.adjClose[lastData.adjClose.length - 1] : null;
+  const lastTs = lastData ? lastData.timestamps[lastData.timestamps.length - 1] : null;
+  el('footer-right').textContent = lastPrice ? `${lastTicker} last: ${fmtPrice(lastPrice)}` : '';
+  const srcLabel = STATE.dataSource === 'preloaded' ? 'Pre-built data (adj. close · total return · updated nightly)'
+    : STATE.dataSource === 'fmp' ? 'Financial Modeling Prep (adj. close · total return)'
+    : STATE.dataSource === 'polygon' ? 'Polygon.io (adj. close · total return)'
+    : STATE.dataSource === 'yahoo' ? 'Yahoo Finance (adj. close · total return)'
+    : STATE.dataSource === 'demo' ? 'Synthetic demo data — not for client use'
+    : 'Loading...';
+  el('footer-data').textContent = `Data: ${srcLabel}${lastTs ? ' · As of ' + fmtDate(lastTs) : ''}`;
+  if (el('mpt-asof')) el('mpt-asof').textContent = lastTs ? 'As of ' + fmtDate(lastTs) : '';
+
+
+  // Methodology card dynamic fields
+  const smLabel = STATE.startMethod.type === 'avg'
+    ? `Start price: ${STATE.startMethod.n}-trading-day average ending on measurement start date`
+    : 'Start price: single closing price on measurement start date';
+  const emLabel = STATE.endMethod.type === 'avg'
+    ? `End price: ${STATE.endMethod.n}-trading-day average ending on measurement end date`
+    : 'End price: single closing price on measurement end date';
+  const srcDetail = STATE.dataSource === 'fmp'
+    ? 'Financial Modeling Prep (adj. close, splits + dividends reinvested — true TSR)'
+    : STATE.dataSource === 'preloaded'
+    ? 'Pre-built nightly data (adj. close, splits + dividends reinvested — true TSR)'
+    : STATE.dataSource === 'fmp'
+    ? 'Financial Modeling Prep (adj. close, splits + dividends reinvested — true TSR)'
+    : STATE.dataSource === 'polygon'
+    ? 'Polygon.io (adj. close, splits + dividends reinvested — true TSR)'
+    : STATE.dataSource === 'yahoo'
+    ? 'Yahoo Finance (adj. close, splits + dividends reinvested — true TSR)'
+    : STATE.dataSource === 'demo'
+    ? 'Synthetic demo data — NOT for client use'
+    : 'Pending data load';
+  if (el('meth-start-detail')) el('meth-start-detail').textContent = smLabel;
+  if (el('meth-end-detail')) el('meth-end-detail').textContent = emLabel;
+  if (el('meth-source-detail')) el('meth-source-detail').textContent = 'Price data: ' + srcDetail;
+  if (el('meth-asof-detail')) el('meth-asof-detail').textContent = lastTs ? 'Data as of ' + fmtDate(lastTs) : '';
+  if (el('meth-card-sub')) el('meth-card-sub').textContent = srcDetail;
+}
+
+function updateDataTable() {
+  const results = STATE.results;
+  if (!results) return;
+  const tbody = document.getElementById('dtable-body');
+  const rows = [
+    { ticker: STATE.subject.ticker, name: STATE.subject.name, isSubject: true },
+    ...STATE.peers.map(p => ({ ticker: p.ticker, name: p.name, isSubject: false }))
+  ].map(item => {
+    const r = results[item.ticker];
+    if (!r) return null;
+    return { ...item, ...r, tsr: getActiveTSR(r) };
+  }).filter(Boolean);
+
+  const subTSR = results[STATE.subject.ticker] ? getActiveTSR(results[STATE.subject.ticker]) : null;
+  rows.forEach(r => { r.vsSub = r.tsr !== null && subTSR !== null ? r.tsr - subTSR : null; });
+
+  // Sort
+  rows.sort((a, b) => {
+    const col = STATE.sortCol;
+    let av = col === 'rank' ? a.rank : col === 'name' ? a.name : col === 'ticker' ? a.ticker :
+      col === 'startPrice' ? a.startPrice : col === 'endPrice' ? a.endPrice :
+      col === 'cumTSR' ? a.cumTSR : col === 'annTSR' ? a.annTSR :
+      col === 'vsSub' ? a.vsSub : col === 'pctl' ? a.percentile : a.rank;
+    let bv = col === 'rank' ? b.rank : col === 'name' ? b.name : col === 'ticker' ? b.ticker :
+      col === 'startPrice' ? b.startPrice : col === 'endPrice' ? b.endPrice :
+      col === 'cumTSR' ? b.cumTSR : col === 'annTSR' ? b.annTSR :
+      col === 'vsSub' ? b.vsSub : col === 'pctl' ? b.percentile : b.rank;
+    if (typeof av === 'string') return STATE.sortDir * av.localeCompare(bv);
+    return STATE.sortDir * ((av ?? 0) - (bv ?? 0));
+  });
+
+  // Keep subject pinned to top
+  const subRows = rows.filter(r => r.isSubject);
+  const peerRows = rows.filter(r => !r.isSubject);
+  const sorted = [...subRows, ...peerRows];
+
+  tbody.innerHTML = sorted.map(r => `
+    <tr class="${r.isSubject ? 'sub-row' : ''}">
+      <td>${r.rank ?? '—'}</td>
+      <td>${r.name || r.ticker}</td>
+      <td>${r.ticker}</td>
+      <td>${fmtPrice(r.startPrice)}</td>
+      <td>${fmtPrice(r.endPrice)}</td>
+      <td style="color:${r.cumTSR > 0 ? '#4CAF50' : r.cumTSR < 0 ? '#C0392B' : '#333'}">${fmt(r.cumTSR)}</td>
+      <td style="color:${r.annTSR > 0 ? '#4CAF50' : r.annTSR < 0 ? '#C0392B' : '#333'}">${fmt(r.annTSR)}</td>
+      <td style="color:${r.vsSub > 0 ? '#4CAF50' : r.vsSub < 0 ? '#C0392B' : '#333'}">${fmtPpts(r.vsSub)}</td>
+      <td>${r.percentile !== undefined ? ordinal(Math.round(r.percentile)) : '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('tbl-count').textContent = `(${sorted.length} companies)`;
+  // Update sort indicators
+  document.querySelectorAll('.dtable th').forEach(th => {
+    th.className = th.dataset.col === STATE.sortCol ? (STATE.sortDir === 1 ? 'sa' : 'sd') : '';
+  });
+}
+
+function buildMethodBadge() {
+  const s = STATE.startMethod.type === 'avg' ? `${STATE.startMethod.n}-day avg start` : 'Single-day start';
+  const e = STATE.endMethod.type === 'avg' ? `${STATE.endMethod.n}-day avg end` : 'Single-day end';
+  const tr = STATE.opts.totalReturn ? 'Total Return' : 'Price Only';
+  const ann = STATE.opts.annualized ? 'Annualized' : 'Cumulative';
+  return `${s} · ${e} · ${tr} · ${ann}`;
+}
+
+function renderAll() {
+  try { updateKPIs(); } catch(e) { showError('updateKPIs failed: ' + e.message); console.error('updateKPIs', e); }
+  try { renderLineChart(); } catch(e) { showError('renderLineChart failed: ' + e.message); console.error('renderLineChart', e); }
+  try { renderMultiPeriodTable(); } catch(e) { console.error('renderMultiPeriodTable', e); }
+  try { updateDataTable(); } catch(e) { console.error('updateDataTable', e); }
+}
+
+// ============================================================
+// MULTI-PERIOD PERCENTILE TABLE
+// ============================================================
+const MULTI_PERIODS = [
+  { label: 'YTD',  preset: 'YTD' },
+  { label: '1-Year',  preset: '1Y' },
+  { label: '2-Year',  preset: '2Y' },
+  { label: '3-Year',  preset: '3Y' },
+  { label: '5-Year',  preset: '5Y' },
+];
+
+function computePeriodDatesForLabel(preset) {
+  if (preset === '2Y') {
+    const end = new Date(); end.setHours(0,0,0,0);
+    const start = new Date(end); start.setFullYear(start.getFullYear() - 2);
+    return { start: msToDateStr(start.getTime()), end: msToDateStr(end.getTime()) };
+  }
+  return computePeriodDates(preset);
+}
+
+function calcPeriodResults(startDate, endDate) {
+  const startMs = dateToMs(startDate);
+  const endMs   = dateToMs(endDate);
+  const subData  = STATE.cache[STATE.subject.ticker.toUpperCase()];
+  const subStart = subData ? resolvePrice(subData, startMs, STATE.startMethod) : null;
+  const subEnd   = subData ? resolvePrice(subData, endMs,   STATE.endMethod)   : null;
+  if (!subStart || !subEnd) return null;
+
+  const subCum = subEnd / subStart - 1;
+  const days   = (endMs - startMs) / 86400000;
+  const years  = days / 365.25;
+  const subAnn = years > 0 ? Math.pow(1 + subCum, 1 / years) - 1 : subCum;
+  const subTSR = STATE.opts.annualized ? subAnn : subCum;
+
+  const peerTSRs = STATE.peers.map(p => {
+    const d = STATE.cache[p.ticker.toUpperCase()];
+    if (!d) return null;
+    const ps = resolvePrice(d, startMs, STATE.startMethod);
+    const pe = resolvePrice(d, endMs,   STATE.endMethod);
+    if (!ps || !pe) return null;
+    const cum = pe / ps - 1;
+    const ann = years > 0 ? Math.pow(1 + cum, 1 / years) - 1 : cum;
+    return STATE.opts.annualized ? ann : cum;
+  }).filter(v => v !== null);
+
+  if (!peerTSRs.length) return null;
+
+  const allTSRs = [subTSR, ...peerTSRs];
+  const pctl   = calcPercentileRank(subTSR, peerTSRs);
+  const med    = median(peerTSRs);
+  const p25val = percentile(peerTSRs, 25);
+  const p75val = percentile(peerTSRs, 75);
+  const rank   = allTSRs.slice().sort((a,b) => b - a).indexOf(subTSR) + 1;
+  const n      = allTSRs.length;
+
+  return { subTSR, pctl, med, p25: p25val, p75: p75val, rank, n, years };
+}
+
+function renderMultiPeriodTable() {
+  const wrap = document.getElementById('multiperiod-table-wrap');
+  if (!wrap) return;
+
+  const rows = MULTI_PERIODS.map(p => {
+    const dates = computePeriodDatesForLabel(p.preset);
+    if (!dates) return null;
+    const r = calcPeriodResults(dates.start, dates.end);
+    return r ? { ...p, ...r, dates } : null;
+  }).filter(Boolean);
+
+  if (!rows.length) {
+    wrap.innerHTML = '<p style="font-size:12px;color:#999;padding:8px">Insufficient data for multi-period comparison.</p>';
+    return;
+  }
+
+  const pctlColor = p => p >= 75 ? '#2E7D32' : p >= 50 ? '#1565C0' : p >= 25 ? '#E65100' : '#B71C1C';
+  const pctlBg   = p => p >= 75 ? '#F1F8F1' : p >= 50 ? '#EEF3FB' : p >= 25 ? '#FFF3E0' : '#FFF0EE';
+
+  const label = STATE.opts.annualized ? 'Ann. TSR' : 'Cum. TSR';
+
+  const thStyle = 'text-align:right;padding:9px 14px;font-size:10px;font-weight:700;color:var(--mgray);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);white-space:nowrap';
+  const thStyleL = thStyle.replace('text-align:right','text-align:left');
+  const thStyleC = thStyle.replace('text-align:right','text-align:center');
+
+  wrap.innerHTML = `
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead>
+      <tr style="background:#FAFBFC">
+        <th style="${thStyleL}">Period</th>
+        <th style="${thStyle}">${label}</th>
+        <th style="${thStyleC}">Percentile</th>
+        <th style="${thStyleC}">Rank</th>
+        <th style="${thStyle}">vs. Median</th>
+        <th style="${thStyle}">Peer Median</th>
+        <th style="${thStyle}">25th – 75th</th>
+        <th style="${thStyleL}">Window</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map((r, idx) => {
+        const isActive = (STATE.periodPreset === r.preset) ||
+          (STATE.periodPreset === 'custom' && idx === 0);
+        const bg = isActive ? '#EEF2F7' : (idx % 2 === 0 ? '#fff' : '#FAFAFA');
+        const pc = Math.round(r.pctl);
+        const vsMed = r.subTSR - r.med;
+        const td = `padding:9px 14px;border-bottom:1px solid var(--border)`;
+        return `
+        <tr style="background:${bg}">
+          <td style="${td};color:var(--navy);font-weight:${isActive?'700':'600'};white-space:nowrap">${r.label}${isActive ? '<span style="color:var(--teal);margin-left:5px;font-size:10px">▶</span>' : ''}</td>
+          <td style="${td};text-align:right;font-weight:${isActive?'700':'400'};color:${r.subTSR>=0?'#2E7D32':'#C0392B'}">${fmt(r.subTSR)}</td>
+          <td style="${td};text-align:center">
+            <span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:${pctlBg(pc)};color:${pctlColor(pc)}">${ordinal(pc)}</span>
+          </td>
+          <td style="${td};text-align:center;color:#666;font-size:11px">${r.rank} / ${r.n}</td>
+          <td style="${td};text-align:right;color:${vsMed>=0?'#2E7D32':'#C0392B'}">${fmtPpts(vsMed)}</td>
+          <td style="${td};text-align:right;color:#555">${fmt(r.med)}</td>
+          <td style="${td};text-align:right;color:#888;font-size:11px">${fmt(r.p25)} – ${fmt(r.p75)}</td>
+          <td style="${td};color:#999;font-size:11px;white-space:nowrap">${fmtDateShort(dateToMs(r.dates.start))} – ${fmtDateShort(dateToMs(r.dates.end))}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+  <div style="margin-top:8px;font-size:10px;color:#aaa;padding:0 2px">
+    ${STATE.opts.annualized ? 'Annualized' : 'Cumulative'} return &nbsp;·&nbsp; ${STATE.opts.totalReturn ? 'Total return (adj. close)' : 'Price return only'} &nbsp;·&nbsp; ${STATE.peers.length} peer${STATE.peers.length!==1?'s':''} &nbsp;·&nbsp; Same price averaging method as primary period
+  </div>`;
+}
+
+// ============================================================
+// PEER LIST UI
+// ============================================================
+function renderPeerList() {
+  const el = document.getElementById('peer-list');
+  el.innerHTML = STATE.peers.map((p, i) => `
+    <div class="peer-item" draggable="true">
+      <span class="peer-tkr">${p.ticker}</span>
+      <span class="peer-nm">${p.name || ''}</span>
+      <span class="peer-st">${STATE.cache[p.ticker.toUpperCase()] ? '✓' : '·'}</span>
+      <button class="peer-rm" onclick="App.removePeer(${i})" title="Remove">×</button>
+    </div>`).join('');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportCSV() {
+  const results = STATE.results;
+  if (!results) return;
+  const rows = [['Rank','Company','Ticker','Start Price','End Price','Cumulative TSR','Annualized TSR','vs. Subject (ppts)','Percentile']];
+  const subTSR = results[STATE.subject.ticker] ? getActiveTSR(results[STATE.subject.ticker]) : null;
+  [
+    { ticker: STATE.subject.ticker, name: STATE.subject.name },
+    ...STATE.peers.map(p => ({ ticker: p.ticker, name: p.name }))
+  ].forEach(item => {
+    const r = results[item.ticker];
+    if (!r) return;
+    const tsr = getActiveTSR(r);
+    rows.push([
+      r.rank ?? '', item.name || item.ticker, item.ticker,
+      r.startPrice?.toFixed(2) ?? '', r.endPrice?.toFixed(2) ?? '',
+      r.cumTSR !== null ? (r.cumTSR * 100).toFixed(2) + '%' : '',
+      r.annTSR !== null ? (r.annTSR * 100).toFixed(2) + '%' : '',
+      subTSR !== null && tsr !== null ? ((tsr - subTSR) * 100).toFixed(2) : '',
+      r.percentile !== undefined ? Math.round(r.percentile) : ''
+    ]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `TSR_${STATE.subject.ticker}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ============================================================
+// URL PRESET SYSTEM
+// ============================================================
+function encodePreset() {
+  const { startDate, endDate } = getActiveDates();
+  const cfg = {
+    s: { t: STATE.subject.ticker, n: STATE.subject.name },
+    p: STATE.peers.map(p => ({ t: p.ticker, n: p.name })),
+    b: STATE.benchmarks.map(b => ({ t: b.ticker, n: b.name, a: b.active })),
+    pp: STATE.periodPreset,
+    sd: startDate, ed: endDate,
+    sm: STATE.startMethod, em: STATE.endMethod,
+    o: STATE.opts,
+    fk: STATE.fmpKey || undefined,
+    pk: STATE.polygonKey || undefined
+  };
+  try { return btoa(JSON.stringify(cfg)); } catch(e) { return null; }
+}
+
+function decodePreset(str) {
+  try {
+    const cfg = JSON.parse(atob(str));
+    STATE.subject = { ticker: cfg.s.t, name: cfg.s.n };
+    STATE.peers = (cfg.p || []).map(p => ({ ticker: p.t, name: p.n }));
+    STATE.benchmarks = (cfg.b || []).map(b => ({ ticker: b.t, name: b.n, active: b.a }));
+    STATE.periodPreset = cfg.pp || '3Y';
+    STATE.startDate = cfg.sd;
+    STATE.endDate = cfg.ed;
+    STATE.startMethod = cfg.sm || STATE.startMethod;
+    STATE.endMethod = cfg.em || STATE.endMethod;
+    STATE.opts = { ...STATE.opts, ...(cfg.o || {}) };
+    if (cfg.fk) STATE.fmpKey = cfg.fk;
+    if (cfg.pk) STATE.polygonKey = cfg.pk;
+    return cfg.s?.n || cfg.s?.t || 'Custom';
+  } catch(e) { return null; }
+}
+
+// ============================================================
+// ERROR / STATUS
+// ============================================================
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function hideError() { document.getElementById('error-banner').style.display = 'none'; }
+
+function showDemoBanner(show) {
+  const el = document.getElementById('demo-banner');
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
+function showLoading(show, txt='Loading...', prog='') {
+  const el = document.getElementById('loading-overlay');
+  el.classList.toggle('hidden', !show);
+  document.getElementById('load-txt').textContent = txt;
+  document.getElementById('load-prog').textContent = prog;
+}
+
+// ============================================================
+// MAIN APP CONTROLLER
+// ============================================================
+const App = {
+  toggleSidebar() {
+    const panel = document.getElementById('config-panel');
+    const btn = document.getElementById('sidebar-toggle');
+    const overlay = document.getElementById('loading-overlay');
+    panel.classList.toggle('collapsed');
+    btn.classList.toggle('collapsed');
+    btn.innerHTML = panel.classList.contains('collapsed') ? '&#8250;' : '&#8249;';
+    const w = panel.classList.contains('collapsed') ? 0 : (parseInt(panel.style.width) || 276);
+    overlay.style.left = w + 'px';
+  },
+
+  setPeerType(type) {
+    STATE.peerType = type;
+    document.querySelectorAll('#peer-type-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === type));
+    document.getElementById('manual-peer-sec').style.display = type === 'manual' ? 'block' : 'none';
+    document.getElementById('index-peer-sec').style.display = type === 'index' ? 'block' : 'none';
+  },
+
+  setPeriodPreset(preset) {
+    STATE.periodPreset = preset;
+    document.querySelectorAll('#period-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === preset));
+    document.getElementById('custom-dates').style.display = preset === 'custom' ? 'block' : 'none';
+    if (preset !== 'custom') {
+      const d = computePeriodDates(preset);
+      if (d) document.getElementById('period-display').textContent = `${fmtDate(dateToMs(d.start))} – ${fmtDate(dateToMs(d.end))}`;
+    }
+  },
+
+  setMethod(which, type) {
+    const key = which + 'Method';
+    STATE[key].type = type;
+    document.querySelectorAll(`#${which}-meth-tgl .tgl-btn`).forEach(b => b.classList.toggle('active', b.dataset.v === type));
+    document.getElementById(`${which}-n-row`).style.display = type === 'avg' ? 'flex' : 'none';
+    this.updateMethodBadge();
+  },
+
+  setN(which, n, btn) {
+    document.querySelectorAll(`#${which}-n-row .n-btn`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const custInp = document.getElementById(`${which}-n-cust`);
+    if (n === 'custom') {
+      custInp.style.display = 'inline-block';
+      STATE[which + 'Method'].n = parseInt(custInp.value) || 20;
+    } else {
+      custInp.style.display = 'none';
+      STATE[which + 'Method'].n = n;
+    }
+    this.updateMethodBadge();
+  },
+
+  setNCustom(which, val) {
+    STATE[which + 'Method'].n = parseInt(val) || 20;
+    this.updateMethodBadge();
+  },
+
+  updateMethodBadge() {
+    document.getElementById('meth-badge').textContent = buildMethodBadge();
+  },
+
+  setChartType(type) {
+    STATE.opts.chartType = type;
+    document.querySelectorAll('#chart-type-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === type));
+  },
+
+  setPeerDisplay(mode) {
+    STATE.opts.peerDisplay = mode;
+    document.querySelectorAll('#peer-disp-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === mode));
+  },
+
+  optChanged() {
+    STATE.opts.totalReturn = document.getElementById('opt-tr').checked;
+    STATE.opts.annualized = document.getElementById('opt-ann').checked;
+    STATE.opts.showMedian = document.getElementById('opt-med').checked;
+    STATE.opts.showBand = document.getElementById('opt-band').checked;
+    STATE.opts.showBenchmark = document.getElementById('opt-bm').checked;
+    this.updateMethodBadge();
+  },
+
+  toggleBenchmark(el) {
+    const tkr = el.dataset.tkr;
+    const bm = STATE.benchmarks.find(b => b.ticker === tkr);
+    if (bm) {
+      bm.active = !bm.active;
+      el.classList.toggle('active', bm.active);
+    }
+  },
+
+  addCustomBenchmark() {
+    const inp = document.getElementById('bm-add-inp');
+    const tkr = inp.value.trim().toUpperCase();
+    if (!tkr) return;
+    if (!STATE.benchmarks.find(b => b.ticker === tkr)) {
+      STATE.benchmarks.push({ ticker: tkr, name: tkr, active: true });
+      const pill = document.createElement('div');
+      pill.className = 'bm-pill active';
+      pill.dataset.tkr = tkr;
+      pill.innerHTML = tkr + ' <span class="bm-pill-x" onclick="this.parentNode.remove()">×</span>';
+      pill.onclick = () => this.toggleBenchmark(pill);
+      document.getElementById('bm-pills').appendChild(pill);
+    }
+    inp.value = '';
+  },
+
+  addPeerFromInput() {
+    const inp = document.getElementById('peer-add-inp');
+    const tkr = inp.value.trim().toUpperCase();
+    if (!tkr) return;
+    this._addPeerTicker(tkr);
+    inp.value = '';
+  },
+
+  addBulkPeers() {
+    const raw = document.getElementById('bulk-inp').value;
+    const tickers = raw.split(/[\s,\n]+/).map(t => t.trim().toUpperCase()).filter(Boolean);
+    tickers.forEach(t => this._addPeerTicker(t));
+    document.getElementById('bulk-inp').value = '';
+  },
+
+  _addPeerTicker(tkr) {
+    if (!tkr || STATE.subject.ticker.toUpperCase() === tkr) return;
+    if (!STATE.peers.find(p => p.ticker.toUpperCase() === tkr)) {
+      const cached = STATE.cache[tkr];
+      STATE.peers.push({ ticker: tkr, name: cached?.name || tkr });
+      renderPeerList();
+    }
+  },
+
+  removePeer(i) {
+    STATE.peers.splice(i, 1);
+    renderPeerList();
+  },
+
+  loadIndexGroup() {
+    const sel = document.getElementById('index-select').value;
+    if (!sel || !INDEX_DATA[sel]) return;
+    const tickers = INDEX_DATA[sel];
+    const note = document.getElementById('index-note');
+    note.textContent = `Loading ${tickers.length} tickers from static list (as of 2024). Large groups may take time to fetch.`;
+    STATE.peers = tickers
+      .filter(t => t !== STATE.subject.ticker.toUpperCase())
+      .map(t => ({ ticker: t, name: STATE.cache[t]?.name || t }));
+    App.setPeerType('manual');
+    renderPeerList();
+  },
+
+  sortTable(col) {
+    if (STATE.sortCol === col) STATE.sortDir *= -1;
+    else { STATE.sortCol = col; STATE.sortDir = -1; }
+    updateDataTable();
+  },
+
+  toggleTable() {
+    STATE.tableOpen = !STATE.tableOpen;
+    document.getElementById('tbl-body').classList.toggle('open', STATE.tableOpen);
+    document.getElementById('tbl-arr').classList.toggle('open', STATE.tableOpen);
+  },
+
+  exportCSV,
+
+  toggleCSVSection() {
+    const sec = document.getElementById('csv-section');
+    sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+  },
+
+  parseCSVPaste() {
+    const ticker = document.getElementById('csv-ticker-inp').value.trim().toUpperCase();
+    const csv = document.getElementById('csv-paste-area').value.trim();
+    const status = document.getElementById('csv-status');
+    if (!ticker) { status.textContent = '⚠ Enter a ticker first.'; status.style.color = 'var(--neg)'; return; }
+    if (!csv) { status.textContent = '⚠ Paste CSV content first.'; status.style.color = 'var(--neg)'; return; }
+    this._loadCSV(ticker, csv, status);
+  },
+
+  handleCSVFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const ticker = document.getElementById('csv-ticker-inp').value.trim().toUpperCase()
+      || file.name.replace(/\.csv$/i,'').toUpperCase();
+    document.getElementById('csv-ticker-inp').value = ticker;
+    const status = document.getElementById('csv-status');
+    const reader = new FileReader();
+    reader.onload = e => this._loadCSV(ticker, e.target.result, status);
+    reader.readAsText(file);
+  },
+
+  _loadCSV(ticker, csvText, statusEl) {
+    const parsed = parseYahooCSV(csvText, ticker, ticker);
+    if (!parsed || !parsed.timestamps.length) {
+      statusEl.textContent = '⚠ Could not parse CSV. Make sure it is Yahoo Finance format (Date, Adj Close columns).';
+      statusEl.style.color = 'var(--neg)';
+      return;
+    }
+    STATE.cache[ticker] = parsed;
+    // Update peer name if we have it
+    const peer = STATE.peers.find(p => p.ticker.toUpperCase() === ticker);
+    if (peer && !peer.name) peer.name = ticker;
+    if (STATE.subject.ticker.toUpperCase() === ticker && !STATE.subject.name) STATE.subject.name = ticker;
+    statusEl.textContent = `✓ Loaded ${parsed.timestamps.length} days for ${ticker}`;
+    statusEl.style.color = 'var(--pos)';
+    document.getElementById('csv-paste-area').value = '';
+    // Update loaded list
+    const loaded = Object.keys(STATE.cache);
+    document.getElementById('csv-loaded-list').textContent =
+      loaded.length ? `Loaded: ${loaded.join(', ')}` : '';
+    renderPeerList();
+    // If we have enough data, render
+    const needed = getAllTickers();
+    const have = needed.filter(t => STATE.cache[t]);
+    if (have.length === needed.length) {
+      calculateAll(); renderAll(); hideError();
+    } else {
+      const missing = needed.filter(t => !STATE.cache[t]);
+      statusEl.textContent += ` — still need: ${missing.join(', ')}`;
+    }
+  },
+
+  async applyConfig() {
+    // Read config from UI
+    const subTkr = document.getElementById('c-subject-tkr').value.trim().toUpperCase();
+    const subName = document.getElementById('c-subject-name').value.trim();
+    if (!subTkr) { showError('Please enter a subject ticker.'); return; }
+    STATE.subject.ticker = subTkr;
+    STATE.subject.name = subName || subTkr;
+    STATE.fmpKey = document.getElementById('c-fmp-key').value.trim();
+    STATE.polygonKey = document.getElementById('c-polygon-key').value.trim();
+    this.optChanged();
+
+    if (STATE.periodPreset === 'custom') {
+      STATE.startDate = document.getElementById('c-start').value;
+      STATE.endDate = document.getElementById('c-end').value;
+      if (!STATE.startDate || !STATE.endDate) { showError('Please set start and end dates.'); return; }
+    }
+
+    // Fetch new data
+    STATE.dataSource = null;
+    STATE.sourcePreference = null;
+    showLoading(true, 'Fetching data...');
+    await fetchAll();
+    // Update peer names from cache
+    STATE.peers.forEach(p => {
+      const d = STATE.cache[p.ticker.toUpperCase()];
+      if (d && d.name !== p.ticker) p.name = d.name;
+    });
+    STATE.subject.name = STATE.cache[subTkr]?.name || subName;
+    document.getElementById('c-subject-name').value = STATE.subject.name;
+    renderPeerList();
+    calculateAll();
+    renderAll();
+    showLoading(false);
+    window.location.hash = '#cfg=' + encodePreset();
+  },
+
+  shareLink() {
+    const url = window.location.href.split('#')[0] + '#cfg=' + encodePreset();
+    const copied = () => {
+      const btn = document.querySelector('.hdr-btn');
+      if (btn) { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 2000); }
+    };
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(copied).catch(() => prompt('Copy this URL:', url));
+      } else {
+        prompt('Copy this URL:', url);
+      }
+    } catch(e) { prompt('Copy this URL:', url); }
+  },
+
+  async init() {
+    // Check URL hash for preset
+    const hash = window.location.hash;
+    if (hash.startsWith('#cfg=')) {
+      const clientName = decodePreset(hash.slice(5));
+      if (clientName) {
+        const banner = document.getElementById('preset-banner');
+        banner.style.display = 'block';
+        banner.textContent = `✓ ${clientName} configuration loaded`;
+        setTimeout(() => banner.style.display = 'none', 5000);
+      }
+    }
+
+    // Sync UI from state
+    document.getElementById('c-subject-tkr').value = STATE.subject.ticker;
+    document.getElementById('c-subject-name').value = STATE.subject.name;
+    document.getElementById('c-fmp-key').value = STATE.fmpKey || '';
+    document.getElementById('c-polygon-key').value = STATE.polygonKey || '';
+    this.setPeriodPreset(STATE.periodPreset);
+    this.setMethod('start', STATE.startMethod.type);
+    this.setMethod('end', STATE.endMethod.type);
+    document.getElementById('opt-tr').checked = STATE.opts.totalReturn;
+    document.getElementById('opt-ann').checked = STATE.opts.annualized;
+    document.getElementById('opt-med').checked = STATE.opts.showMedian;
+    document.getElementById('opt-band').checked = STATE.opts.showBand;
+    document.getElementById('opt-bm').checked = STATE.opts.showBenchmark;
+
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('c-end').value = today;
+    const d3y = new Date(); d3y.setFullYear(d3y.getFullYear()-3);
+    document.getElementById('c-start').value = d3y.toISOString().split('T')[0];
+
+    renderPeerList();
+    this.updateMethodBadge();
+
+    // Try live fetch; fall back to demo data if everything is blocked
+    STATE.dataSource = null;
+    STATE.sourcePreference = null;
+    showLoading(true, `Fetching market data for ${getAllTickers().length} tickers…`);
+    const fetched = await fetchAll();
+
+    if (fetched === 0) {
+      // All sources blocked — load demo data so the tool is usable
+      loadDemoData();
+      showDemoBanner(true);
+      hideError();
+    } else {
+      // Update peer names from real data
+      STATE.peers.forEach(p => {
+        const d = STATE.cache[p.ticker.toUpperCase()];
+        if (d) p.name = d.name;
+      });
+      STATE.subject.name = STATE.cache[STATE.subject.ticker.toUpperCase()]?.name || STATE.subject.name;
+      document.getElementById('c-subject-name').value = STATE.subject.name;
+      showDemoBanner(false);
+    }
+
+    renderPeerList();
+    calculateAll();
+    renderAll();
+    showLoading(false);
+
+    // Diagnostic: show state after init
+    const diag = document.getElementById('diag-panel');
+    if (diag) {
+      const cacheKeys = Object.keys(STATE.cache);
+      const resKeys = STATE.results ? Object.keys(STATE.results) : [];
+      const subResult = STATE.results?.[STATE.subject.ticker];
+      diag.innerHTML =
+        `<strong>Diagnostic</strong> — Source: <em>${STATE.dataSource || 'none'}</em> &nbsp;|&nbsp; ` +
+        `Cache: ${cacheKeys.length} tickers (${cacheKeys.join(', ')}) &nbsp;|&nbsp; ` +
+        `Results: ${resKeys.length} (${resKeys.join(', ')}) &nbsp;|&nbsp; ` +
+        `Subject TSR: ${subResult ? JSON.stringify({cum: subResult.cumTSR?.toFixed(3), ann: subResult.annTSR?.toFixed(3), startP: subResult.startPrice?.toFixed(2), endP: subResult.endPrice?.toFixed(2)}) : 'null'} &nbsp;|&nbsp; ` +
+        `Chart.js loaded: ${typeof Chart !== 'undefined'} &nbsp;|&nbsp; ` +
+        `Peers w/results: ${STATE.peers.filter(p => STATE.results?.[p.ticker]?.startPrice).length}/${STATE.peers.length}`;
+      diag.style.display = 'block';
+    }
+  }
+};
+
+window.addEventListener('load', () => App.init());
+</script>
+</body>
+</html>

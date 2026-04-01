@@ -146,6 +146,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 /* RESPONSIVE */
 @media(max-width:1200px){#kpi-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:1024px){#config-panel{width:252px;min-width:252px}#sidebar-toggle{left:252px}#loading-overlay{left:252px}}
+@media(max-width:768px){
+  #hdr-brand{display:none}
+  #hdr-period{font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #app-layout{flex-direction:column}
+  #config-panel{position:fixed!important;left:-100%!important;top:48px!important;width:88%!important;min-width:0!important;height:calc(100vh - 48px)!important;z-index:200!important;box-shadow:4px 0 20px rgba(0,0,0,.18)!important;transition:left 200ms!important}
+  #config-panel.mobile-open{left:0!important}
+  #sidebar-toggle{display:none}
+  #mobile-backdrop{display:none;position:fixed;inset:48px 0 0 0;background:rgba(0,0,0,.35);z-index:199}
+  #mobile-backdrop.open{display:block}
+  #dashboard{padding:10px}
+  #kpi-strip{grid-template-columns:repeat(2,1fr)!important}
+  .chart-card{padding:11px}
+  .cc-hdr{flex-wrap:wrap;gap:5px}
+  .cc-badge{align-self:flex-start}
+  #app-footer{font-size:10px;padding:6px 10px;flex-wrap:wrap;gap:4px}
+}
+
+/* INFO POPOVER */
+#info-popover{display:none;position:fixed;top:53px;right:10px;background:#fff;border:1px solid var(--border);border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.13);padding:13px 15px;width:300px;z-index:400;font-size:11px;line-height:1.7;color:#444}
+#info-popover.open{display:block}
+#info-pop-title{font-weight:700;color:var(--navy);font-size:12px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.info-row{display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid #f4f4f4}
+.info-lbl{color:var(--mgray)}
+.info-val{font-weight:600;color:var(--navy);text-align:right}
+#info-missing-line{color:var(--neg);margin-top:7px;font-size:10px;padding-top:6px;border-top:1px solid var(--border);display:none;line-height:1.5}
 
 /* PRINT */
 @media print{
@@ -178,11 +203,27 @@ input[type="date"]:focus{border-color:var(--teal)}
   </div>
   <div id="hdr-period">Loading...</div>
   <div id="hdr-actions">
+    <button class="hdr-btn" id="info-btn" onclick="App.toggleInfoPopover()" title="Analysis details">&#9432; Details</button>
     <button class="hdr-btn" onclick="App.shareLink()">Share Link</button>
     <button class="hdr-btn" id="cfg-toggle-btn" onclick="App.toggleSidebar()">&#9776; Config</button>
     <span id="hdr-brand">Prepared by Semler Brossy</span>
   </div>
 </header>
+
+<div id="mobile-backdrop" onclick="App.toggleSidebar()"></div>
+
+<div id="info-popover">
+  <div id="info-pop-title">
+    <span>Analysis Details</span>
+    <span onclick="App.toggleInfoPopover()" style="cursor:pointer;opacity:.5;font-size:14px;font-weight:400">&#10005;</span>
+  </div>
+  <div class="info-row"><span class="info-lbl">Data source</span><span class="info-val" id="info-source">—</span></div>
+  <div class="info-row"><span class="info-lbl">Return type</span><span class="info-val" id="info-return">—</span></div>
+  <div class="info-row"><span class="info-lbl">Measurement</span><span class="info-val" id="info-measure">—</span></div>
+  <div class="info-row"><span class="info-lbl">Start price</span><span class="info-val" id="info-start-meth">—</span></div>
+  <div class="info-row"><span class="info-lbl">End price</span><span class="info-val" id="info-end-meth">—</span></div>
+  <div id="info-missing-line"></div>
+</div>
 
 <div id="sidebar-toggle" onclick="App.toggleSidebar()">&#8249;</div>
 
@@ -235,7 +276,7 @@ input[type="date"]:focus{border-color:var(--teal)}
       <!-- Index -->
       <div id="index-peer-sec" style="display:none">
         <div class="cfg-field">
-          <select id="index-select" class="cfg-select">
+          <select id="index-select" class="cfg-select" onchange="App.loadIndexGroup()">
             <option value="">-- Select Group --</option>
             <optgroup label="S&amp;P Indices">
               <option value="SP500">S&P 500</option>
@@ -257,8 +298,7 @@ input[type="date"]:focus{border-color:var(--teal)}
             </optgroup>
           </select>
         </div>
-        <button style="width:100%;padding:6px;background:var(--navy);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)" onclick="App.loadIndexGroup()">Load as Peer Group</button>
-        <div id="index-note" style="margin-top:5px;font-size:10px;color:#888;line-height:1.4"></div>
+        <div id="index-note" style="margin-top:4px;font-size:10px;color:#888;line-height:1.4"></div>
       </div>
     </div>
 
@@ -269,8 +309,9 @@ input[type="date"]:focus{border-color:var(--teal)}
         <div class="bm-pill" data-tkr="^RUT" onclick="App.toggleBenchmark(this)">Russell 2000</div>
         <div class="bm-pill" data-tkr="^MID" onclick="App.toggleBenchmark(this)">S&amp;P 400</div>
       </div>
-      <div class="peer-add-row" style="margin-top:7px">
-        <input type="text" id="bm-add-inp" class="peer-add-inp" placeholder="Custom ticker" style="text-transform:uppercase"
+      <div style="font-size:10px;color:var(--mgray);margin-top:7px;margin-bottom:3px">Add any ticker as a custom overlay (e.g. QQQ, XLK)</div>
+      <div class="peer-add-row">
+        <input type="text" id="bm-add-inp" class="peer-add-inp" placeholder="Ticker (e.g. QQQ)" style="text-transform:uppercase"
           onkeydown="if(event.key==='Enter')App.addCustomBenchmark()">
         <button class="peer-add-btn" onclick="App.addCustomBenchmark()">+</button>
       </div>
@@ -375,26 +416,31 @@ input[type="date"]:focus{border-color:var(--teal)}
       </div>
     </div>
 
-    <!-- API KEY -->
-    <div class="cfg-sec">
-      <div class="cfg-sec-hdr">Live Data API Keys</div>
-      <div class="cfg-field">
-        <label class="cfg-lbl">Financial Modeling Prep (FMP)</label>
-        <input type="text" id="c-fmp-key" class="cfg-inp" placeholder="Paste your FMP API key" autocomplete="off">
-        <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
-          Free at <strong>financialmodelingprep.com</strong> · 250 calls/day · true TSR (adj. close)
-        </div>
-      </div>
-      <div class="cfg-field">
-        <label class="cfg-lbl">Polygon.io</label>
-        <input type="text" id="c-polygon-key" class="cfg-inp" placeholder="Paste your Polygon API key" autocomplete="off">
-        <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
-          Free at <strong>polygon.io</strong> · unlimited on paid plan ($29/mo) · true TSR (adj. close). Used automatically if FMP is unavailable.
-        </div>
-      </div>
-    </div>
+    <button onclick="App.toggleAdvanced()" style="width:100%;margin-top:6px;padding:6px;background:#fff;color:var(--mgray);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font);text-align:left" id="advanced-toggle">&#9660; Advanced options</button>
 
-    <button onclick="App.toggleCSVSection()" style="width:100%;margin-top:6px;padding:6px;background:#fff;color:var(--navy);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)">&#128196; Paste CSV Data (manual fallback)</button>
+    <div id="advanced-section" style="display:none">
+      <!-- API KEYS -->
+      <div class="cfg-sec" style="margin-top:12px">
+        <div class="cfg-sec-hdr">Live Data API Keys</div>
+        <div style="font-size:10px;color:var(--mgray);margin-bottom:8px;line-height:1.5">Only needed when running locally without the nightly data feed. Not required for the hosted GitHub Pages version.</div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Financial Modeling Prep (FMP)</label>
+          <input type="text" id="c-fmp-key" class="cfg-inp" placeholder="Paste your FMP API key" autocomplete="off">
+          <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
+            Free at <strong>financialmodelingprep.com</strong> · 250 calls/day · true TSR (adj. close)
+          </div>
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Polygon.io</label>
+          <input type="text" id="c-polygon-key" class="cfg-inp" placeholder="Paste your Polygon API key" autocomplete="off">
+          <div style="margin-top:4px;font-size:10px;color:var(--mgray);line-height:1.5">
+            Free at <strong>polygon.io</strong> · unlimited on paid plan ($29/mo) · true TSR (adj. close)
+          </div>
+        </div>
+      </div>
+
+      <button onclick="App.toggleCSVSection()" style="width:100%;margin-top:2px;padding:6px;background:#fff;color:var(--navy);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)">&#128196; Paste CSV Data (manual fallback)</button>
+    </div>
 
   </aside><!-- /config-panel -->
 
@@ -442,11 +488,12 @@ input[type="date"]:focus{border-color:var(--teal)}
       <div class="cc-hdr">
         <div>
           <div class="cc-title">Indexed Total Shareholder Return</div>
-          <div class="cc-sub" id="line-sub">Base = 100 at measurement start price</div>
+          <div style="font-size:11px;font-weight:600;color:var(--navy);margin-top:1px" id="line-context"></div>
+          <div class="cc-sub" id="line-sub"></div>
         </div>
-        <span class="cc-badge" id="line-badge"></span>
       </div>
       <div class="chart-wrap" style="height:380px"><canvas id="line-chart"></canvas></div>
+      <div id="line-footnote" style="font-size:10px;color:var(--mgray);margin-top:8px;line-height:1.6;padding-top:8px;border-top:1px solid var(--border);display:none"></div>
     </div>
 
     <!-- Multi-Period Percentile Table -->
@@ -569,6 +616,16 @@ const INDEX_DATA = {
   SP600:['ACLS','ACM','ADUS','AGIO','AIN','ALEX','ALK','AMBC','AMCX','AMPH','AMNB','AMR','AMWD','APAM','AQST','ARE','ARW','ASGN','ASTE','ATNI','ATRC','ATTO','AVNS','AVNW','AXNX','AXSM','AZZ','BCPC','BFAM','BKH','BLKB','BNS','BOX','BOOT','BRKL','BRP','BTU','BUSE','CAL','CALM','CATY','CBSH','CCOI','CDRE','CHCO','CHDN','CHE','CHEF','CLFD','CLW','CMC','CMCO','CNMD','COHU','CONN','CPF','CRGY','CSWI','CTRE','CUTR','CWT','DCOM','DLB','DNOW','DORM','DXPE','EIG','ELME','EPRT','ESTA','EXP','FARO','FCFS','FCF','FCPT','FIZZ','FLGT','FLNC','FLO','FOUR','FRME','FULT','GDEN','GKOS','GLDD','HAFC','HALO','HAYN','HCSG','HCI','HEES','HI','HLIT','HOLX','HONE','HRMY','HTBK','HWKN']
 };
 
+const INDEX_LABELS = {
+  SP500:'S&P 500', SP400:'S&P 400 MidCap', SP600:'S&P 600 SmallCap',
+  GICS_IT:'GICS: Information Technology', GICS_HC:'GICS: Health Care',
+  GICS_FIN:'GICS: Financials', GICS_IND:'GICS: Industrials',
+  GICS_CD:'GICS: Consumer Discretionary', GICS_CS:'GICS: Consumer Staples',
+  GICS_ENE:'GICS: Energy', GICS_UTL:'GICS: Utilities',
+  GICS_MAT:'GICS: Materials', GICS_RE:'GICS: Real Estate',
+  GICS_COM:'GICS: Communication Services'
+};
+
 // ============================================================
 // APP STATE
 // ============================================================
@@ -587,6 +644,7 @@ const STATE = {
     { ticker: 'SNOW', name: 'Snowflake' }
   ],
   benchmarks: [{ ticker: '^GSPC', name: 'S&P 500', active: true }],
+  loadedIndex: null,
   periodPreset: '3Y',
   startDate: null,
   endDate: null,
@@ -1501,10 +1559,37 @@ function renderLineChart() {
     });
   }
 
-  const methodText = buildMethodBadge();
-  document.getElementById('line-badge').textContent = methodText;
-  document.getElementById('line-sub').textContent =
-    `Base = 100 indexed to ${STATE.startMethod.type === 'avg' ? STATE.startMethod.n + '-day avg' : 'single-day'} start price · ${fmtDate(startMs)} – ${fmtDate(endMs)}`;
+  // Date subtitle
+  const avgParts = [];
+  if (STATE.startMethod.type === 'avg') avgParts.push(`${STATE.startMethod.n}-day avg start`);
+  if (STATE.endMethod.type === 'avg') avgParts.push(`${STATE.endMethod.n}-day avg end`);
+  const dateSub = avgParts.length
+    ? `${avgParts.join(' · ')} · ${fmtDate(startMs)} – ${fmtDate(endMs)}`
+    : `${fmtDate(startMs)} – ${fmtDate(endMs)}`;
+  document.getElementById('line-sub').textContent = dateSub;
+
+  // Peer context line
+  const peerN = STATE.peers.length;
+  const contextText = STATE.loadedIndex
+    ? `${INDEX_LABELS[STATE.loadedIndex] || STATE.loadedIndex} — ${peerN} companies`
+    : `Custom peer group — ${peerN} ${peerN === 1 ? 'company' : 'companies'}`;
+  document.getElementById('line-context').textContent = contextText;
+
+  // Footnote: full list for small custom groups; missing-ticker warning otherwise
+  const footnoteEl = document.getElementById('line-footnote');
+  const missingPeers = STATE.peers.map(p => p.ticker.toUpperCase()).filter(t => !STATE.cache[t]);
+  if (!STATE.loadedIndex && peerN > 0 && peerN <= 30) {
+    const peerList = STATE.peers.map(p => (p.name && p.name !== p.ticker ? `${p.name} (${p.ticker})` : p.ticker)).join(', ');
+    let fn = `Peer companies: ${peerList}`;
+    if (missingPeers.length) fn += ` · ⚠ No data available: ${missingPeers.join(', ')}`;
+    footnoteEl.textContent = fn;
+    footnoteEl.style.display = 'block';
+  } else if (missingPeers.length) {
+    footnoteEl.textContent = `⚠ Data unavailable for ${missingPeers.length} ticker${missingPeers.length > 1 ? 's' : ''}: ${missingPeers.slice(0, 12).join(', ')}${missingPeers.length > 12 ? ` +${missingPeers.length - 12} more` : ''}`;
+    footnoteEl.style.display = 'block';
+  } else {
+    footnoteEl.style.display = 'none';
+  }
 
   // Inline end-of-line label plugin — draws ticker/name at last data point
   const endLabelPlugin = {
@@ -1882,6 +1967,29 @@ function updateKPIs() {
 
   el('meth-badge').textContent = buildMethodBadge();
 
+  // Info popover content
+  const srcShort = STATE.dataSource === 'fmp' ? 'Financial Modeling Prep'
+    : STATE.dataSource === 'yahoo' ? 'Yahoo Finance'
+    : STATE.dataSource === 'polygon' ? 'Polygon.io'
+    : STATE.dataSource === 'preloaded' ? 'Nightly pre-built'
+    : STATE.dataSource === 'demo' ? 'Demo (synthetic data)'
+    : 'Loading…';
+  if (el('info-source')) el('info-source').textContent = srcShort;
+  if (el('info-return')) el('info-return').textContent = STATE.opts.totalReturn ? 'Total Return (adj. close)' : 'Price Only';
+  if (el('info-measure')) el('info-measure').textContent = STATE.opts.annualized ? 'Annualized' : 'Cumulative';
+  if (el('info-start-meth')) el('info-start-meth').textContent = STATE.startMethod.type === 'avg' ? `${STATE.startMethod.n}-day average` : 'Single day';
+  if (el('info-end-meth')) el('info-end-meth').textContent = STATE.endMethod.type === 'avg' ? `${STATE.endMethod.n}-day average` : 'Single day';
+  const infoMissingEl = el('info-missing-line');
+  if (infoMissingEl) {
+    const missing = getAllTickers().filter(t => !STATE.cache[t]);
+    if (missing.length) {
+      infoMissingEl.textContent = `⚠ No data for: ${missing.join(', ')}`;
+      infoMissingEl.style.display = 'block';
+    } else {
+      infoMissingEl.style.display = 'none';
+    }
+  }
+
   // Header
   el('hdr-ticker').textContent = STATE.subject.ticker;
   el('hdr-name').textContent = STATE.subject.name;
@@ -2241,13 +2349,34 @@ function showLoading(show, txt='Loading...', prog='') {
 const App = {
   toggleSidebar() {
     const panel = document.getElementById('config-panel');
-    const btn = document.getElementById('sidebar-toggle');
-    const overlay = document.getElementById('loading-overlay');
-    panel.classList.toggle('collapsed');
-    btn.classList.toggle('collapsed');
-    btn.innerHTML = panel.classList.contains('collapsed') ? '&#8250;' : '&#8249;';
-    const w = panel.classList.contains('collapsed') ? 0 : (parseInt(panel.style.width) || 276);
-    overlay.style.left = w + 'px';
+    const backdrop = document.getElementById('mobile-backdrop');
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      const open = panel.classList.toggle('mobile-open');
+      if (backdrop) backdrop.classList.toggle('open', open);
+    } else {
+      const btn = document.getElementById('sidebar-toggle');
+      const overlay = document.getElementById('loading-overlay');
+      panel.classList.toggle('collapsed');
+      btn.classList.toggle('collapsed');
+      btn.innerHTML = panel.classList.contains('collapsed') ? '&#8250;' : '&#8249;';
+      const w = panel.classList.contains('collapsed') ? 0 : (parseInt(panel.style.width) || 276);
+      overlay.style.left = w + 'px';
+    }
+  },
+
+  toggleInfoPopover() {
+    const pop = document.getElementById('info-popover');
+    const isOpen = pop.classList.toggle('open');
+    if (isOpen) {
+      const close = e => {
+        if (!pop.contains(e.target) && e.target.id !== 'info-btn') {
+          pop.classList.remove('open');
+          document.removeEventListener('click', close);
+        }
+      };
+      setTimeout(() => document.addEventListener('click', close), 0);
+    }
   },
 
   setPeerType(type) {
@@ -2366,6 +2495,7 @@ const App = {
   },
 
   addBulkPeers() {
+    STATE.loadedIndex = null;
     const raw = document.getElementById('bulk-inp').value;
     const tickers = raw.split(/[\s,\n]+/).map(t => t.trim().toUpperCase()).filter(Boolean);
     tickers.forEach(t => this._addPeerTicker(t));
@@ -2382,11 +2512,13 @@ const App = {
   },
 
   removePeer(i) {
+    STATE.loadedIndex = null;
     STATE.peers.splice(i, 1);
     renderPeerList();
   },
 
   clearPeers() {
+    STATE.loadedIndex = null;
     STATE.peers = [];
     renderPeerList();
   },
@@ -2395,205 +2527,10 @@ const App = {
     const sel = document.getElementById('index-select').value;
     if (!sel || !INDEX_DATA[sel]) return;
     const tickers = INDEX_DATA[sel];
-    const note = document.getElementById('index-note');
-    note.textContent = `Loading ${tickers.length} tickers…`;
+    STATE.loadedIndex = sel;
     STATE.peers = tickers
       .filter(t => t !== STATE.subject.ticker.toUpperCase())
       .map(t => ({ ticker: t, name: STATE.cache[t]?.name || t }));
-    App.setPeerType('manual');
-    renderPeerList();
-    App.applyConfig();
-  },
-
-  sortTable(col) {
-    if (STATE.sortCol === col) STATE.sortDir *= -1;
-    else { STATE.sortCol = col; STATE.sortDir = -1; }
-    updateDataTable();
-  },
-
-  toggleTable() {
-    STATE.tableOpen = !STATE.tableOpen;
-    document.getElementById('tbl-body').classList.toggle('open', STATE.tableOpen);
-    document.getElementById('tbl-arr').classList.toggle('open', STATE.tableOpen);
-  },
-
-  exportCSV,
-
-  toggleCSVSection() {
-    const sec = document.getElementById('csv-section');
-    sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-  },
-
-  parseCSVPaste() {
-    const ticker = document.getElementById('csv-ticker-inp').value.trim().toUpperCase();
-    const csv = document.getElementById('csv-paste-area').value.trim();
-    const status = document.getElementById('csv-status');
-    if (!ticker) { status.textContent = '⚠ Enter a ticker first.'; status.style.color = 'var(--neg)'; return; }
-    if (!csv) { status.textContent = '⚠ Paste CSV content first.'; status.style.color = 'var(--neg)'; return; }
-    this._loadCSV(ticker, csv, status);
-  },
-
-  handleCSVFile(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const ticker = document.getElementById('csv-ticker-inp').value.trim().toUpperCase()
-      || file.name.replace(/\.csv$/i,'').toUpperCase();
-    document.getElementById('csv-ticker-inp').value = ticker;
-    const status = document.getElementById('csv-status');
-    const reader = new FileReader();
-    reader.onload = e => this._loadCSV(ticker, e.target.result, status);
-    reader.readAsText(file);
-  },
-
-  _loadCSV(ticker, csvText, statusEl) {
-    const parsed = parseYahooCSV(csvText, ticker, ticker);
-    if (!parsed || !parsed.timestamps.length) {
-      statusEl.textContent = '⚠ Could not parse CSV. Make sure it is Yahoo Finance format (Date, Adj Close columns).';
-      statusEl.style.color = 'var(--neg)';
-      return;
-    }
-    STATE.cache[ticker] = parsed;
-    // Update peer name if we have it
-    const peer = STATE.peers.find(p => p.ticker.toUpperCase() === ticker);
-    if (peer && !peer.name) peer.name = ticker;
-    if (STATE.subject.ticker.toUpperCase() === ticker && !STATE.subject.name) STATE.subject.name = ticker;
-    statusEl.textContent = `✓ Loaded ${parsed.timestamps.length} days for ${ticker}`;
-    statusEl.style.color = 'var(--pos)';
-    document.getElementById('csv-paste-area').value = '';
-    // Update loaded list
-    const loaded = Object.keys(STATE.cache);
-    document.getElementById('csv-loaded-list').textContent =
-      loaded.length ? `Loaded: ${loaded.join(', ')}` : '';
-    renderPeerList();
-    // If we have enough data, render
-    const needed = getAllTickers();
-    const have = needed.filter(t => STATE.cache[t]);
-    if (have.length === needed.length) {
-      calculateAll(); renderAll(); hideError();
-    } else {
-      const missing = needed.filter(t => !STATE.cache[t]);
-      statusEl.textContent += ` — still need: ${missing.join(', ')}`;
-    }
-  },
-
-  async applyConfig() {
-    // Read config from UI
-    const subTkr = document.getElementById('c-subject-tkr').value.trim().toUpperCase();
-    const subName = document.getElementById('c-subject-name').value.trim();
-    if (!subTkr) { showError('Please enter a subject ticker.'); return; }
-    STATE.subject.ticker = subTkr;
-    STATE.subject.name = subName || subTkr;
-    STATE.fmpKey = document.getElementById('c-fmp-key').value.trim();
-    STATE.polygonKey = document.getElementById('c-polygon-key').value.trim();
-    this.optChanged();
-
-    if (STATE.periodPreset === 'custom') {
-      STATE.startDate = document.getElementById('c-start').value;
-      STATE.endDate = document.getElementById('c-end').value;
-      if (!STATE.startDate || !STATE.endDate) { showError('Please set start and end dates.'); return; }
-    }
-
-    // Fetch new data
-    STATE.dataSource = null;
-    STATE.sourcePreference = null;
-    showLoading(true, 'Fetching data...');
-    await fetchAll();
-    // Update peer names from cache
-    STATE.peers.forEach(p => {
-      const d = STATE.cache[p.ticker.toUpperCase()];
-      if (d && d.name !== p.ticker) p.name = d.name;
-    });
-    STATE.subject.name = STATE.cache[subTkr]?.name || subName;
-    document.getElementById('c-subject-name').value = STATE.subject.name;
-    renderPeerList();
-    calculateAll();
-    renderAll();
-    showLoading(false);
-    window.location.hash = '#cfg=' + encodePreset();
-  },
-
-  shareLink() {
-    const url = window.location.href.split('#')[0] + '#cfg=' + encodePreset();
-    const copied = () => {
-      const btn = document.querySelector('.hdr-btn');
-      if (btn) { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 2000); }
-    };
-    try {
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(url).then(copied).catch(() => prompt('Copy this URL:', url));
-      } else {
-        prompt('Copy this URL:', url);
-      }
-    } catch(e) { prompt('Copy this URL:', url); }
-  },
-
-  async init() {
-    // Check URL hash for preset
-    const hash = window.location.hash;
-    if (hash.startsWith('#cfg=')) {
-      const clientName = decodePreset(hash.slice(5));
-      if (clientName) {
-        const banner = document.getElementById('preset-banner');
-        banner.style.display = 'block';
-        banner.textContent = `✓ ${clientName} configuration loaded`;
-        setTimeout(() => banner.style.display = 'none', 5000);
-      }
-    }
-
-    // Sync UI from state
-    document.getElementById('c-subject-tkr').value = STATE.subject.ticker;
-    document.getElementById('c-subject-name').value = STATE.subject.name;
-    document.getElementById('c-fmp-key').value = STATE.fmpKey || '';
-    document.getElementById('c-polygon-key').value = STATE.polygonKey || '';
-    this.setPeriodPreset(STATE.periodPreset);
-    this.setMethod('start', STATE.startMethod.type);
-    this.setMethod('end', STATE.endMethod.type);
-    document.getElementById('opt-tr').checked = STATE.opts.totalReturn;
-    document.getElementById('opt-ann').checked = STATE.opts.annualized;
-    document.getElementById('opt-med').checked = STATE.opts.showMedian;
-    document.getElementById('opt-band').checked = STATE.opts.showBand;
-    document.getElementById('opt-bm').checked = STATE.opts.showBenchmark;
-
-    renderPeerList();
-    this.updateMethodBadge();
-
-    // Show demo data immediately so the page is never blank
-    loadDemoData();
-    showDemoBanner(true);
-    calculateAll();
-    renderAll();
-
-    // Fetch live data in background; replace demo if it loads
-    STATE.dataSource = null;
-    STATE.sourcePreference = null;
-    const fetched = await fetchAll();
-
-    if (fetched > 0) {
-      STATE.peers.forEach(p => {
-        const d = STATE.cache[p.ticker.toUpperCase()];
-        if (d) p.name = d.name;
-      });
-      STATE.subject.name = STATE.cache[STATE.subject.ticker.toUpperCase()]?.name || STATE.subject.name;
-      document.getElementById('c-subject-name').value = STATE.subject.name;
-      showDemoBanner(false);
-      renderPeerList();
-      calculateAll();
-      renderAll();
-    }
-
-    // Diagnostic: source + missing tickers only
-    const diag = document.getElementById('diag-panel');
-    if (diag) {
-      const missing = getAllTickers().filter(t => !STATE.cache[t]);
-      let html = `<strong>Data source:</strong> ${STATE.dataSource || 'none'}`;
-      if (missing.length) html += ` &nbsp;|&nbsp; <span style="color:var(--neg)"><strong>Missing:</strong> ${missing.join(', ')}</span>`;
-      diag.innerHTML = html;
-      diag.style.display = 'block';
-    }
-  }
-};
-
-window.addEventListener('load', () => App.init());
-</script>
-</body>
-</html>
+    const note = document.getElementById('index-note');
+    if (note) note.textContent = `${INDEX_LABELS[sel] || sel} — ${STATE.peers.length} companies`;
+    App.setPeerType(

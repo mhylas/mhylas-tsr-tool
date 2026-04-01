@@ -207,7 +207,10 @@ input[type="date"]:focus{border-color:var(--teal)}
     </div>
 
     <div class="cfg-sec">
-      <div class="cfg-sec-hdr">Peer Group</div>
+      <div class="cfg-sec-hdr" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Peer Group <span id="peer-count" style="background:var(--teal);color:#fff;border-radius:9px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">10</span></span>
+        <button id="clear-peers-btn" onclick="App.clearPeers()" style="font-size:10px;color:var(--neg);background:none;border:none;cursor:pointer;padding:0" title="Clear all peers">Clear All</button>
+      </div>
       <div class="cfg-field">
         <label class="cfg-lbl">Group Type</label>
         <div class="tgl-grp" id="peer-type-tgl">
@@ -561,7 +564,7 @@ const INDEX_DATA = {
   GICS_MAT:['LIN','APD','PPG','ECL','SHW','NEM','FCX','CF','MOS','IP','PKG','SEE','ALB','AVY','BALL','CE','EMN','FMC','IFF','LYB','MLM','OLN','SON','VMC','WLK','NUE','STLD','ATI','MP'],
   GICS_RE:['AMT','PLD','CCI','EQIX','PSA','SPG','O','DLR','WELL','EQR','AVB','VTR','BXP','FRT','HST','KIM','PEAK','WY','SBA','UDR','CPT','MAA','ESS','ARE','EXR','CUBE','NNN','WPC','VICI','GLPI','SBAC'],
   GICS_COM:['GOOGL','GOOG','META','NFLX','DIS','CMCSA','CHTR','T','VZ','TMUS','EA','TTWO','WBD','IPG','OMC','NWS','NWSA','FOXA','FOX','PARA','LUMN','MTCH','IAC','PINS','SNAP','SPOT'],
-  SP500:['AAPL','MSFT','AMZN','NVDA','GOOGL','GOOG','META','BRK-B','TSLA','UNH','LLY','JPM','XOM','JNJ','V','PG','MA','HD','CVX','MRK','AVGO','ABBV','COST','PEP','ADBE','KO','CSCO','MCD','WMT','ACN','CRM','BAC','ORCL','TMO','NEE','ABT','AMD','DHR','NKE','QCOM','PM','SPGI','TXN','HON','AMGN','LIN','BMY','IBM','LOW','RTX','UPS','ISRG','DE','INTU','GS','CAT','GILD','NOW','ELV','SBUX','PLD','BX','MS','AXP','REGN','MDLZ','CI','ADI','VRTX','MMC','PANW','BLK','ADP','BKNG','ZTS','T','SYK','MO','LRCX','AMAT','MU','GE','CB','TJX','SO','DUK','CME','NOC','GD','PNC','USB','MCO','SCHW','WFC','ETN','AON','F','GM','INTC','CL','TGT','EMR','ITW','FI','ICE','SLB','MSCI','TFC','MCK','ROP','MMM','PSA','NSC','ECL','APD','VLO','PH','MPC','EW','IQV','KLAC','SNPS','CDNS','HCA','CHTR','CMCSA','NFLX','DIS','VZ','TMUS','EA','TTWO','CMG','EXC','SRE','PEG','AEP','XEL','WELL','EQR','AVB','AMT','CCI','EQIX','DLR','SPG','O','PSX','COF','STZ','BSX','SHW','DHI','PHM','LEN','NEM','FCX','PPL','CNP','DTE','PCG','ED','ES','CARR','OTIS','XYL','AME','GNRC','HUBB','WAB','ITW','PH','ROK','FDX','JBHT','EXPD','CHRW','GWW','VRSK','FAST','CTAS','RSG','WM','ROP'],
+  SP500:['AAPL','MSFT','NVDA','AMZN','GOOGL','GOOG','META','BRK-B','TSLA','LLY','UNH','AVGO','JPM','V','XOM','MA','JNJ','COST','ABBV','PG','HD','MRK','WMT','CVX','KO','ADBE','CRM','BAC','AMD','ACN','PEP','TMO','ORCL','MCD','ABT','LIN','CSCO','INTU','TXN','QCOM','NEE','PM','GE','IBM','CAT','AXP','GS','RTX','HON','SPGI','AMGN','LOW','BKNG','ISRG','VRTX','MS','NKE','DHR','TJX','SCHW','PLD','UPS','MDT','BLK','SYK','ELV','CB','CI','LMT','AMAT','LRCX','DE','REGN','BSX','GILD','ADI','ZTS','BMY','MMC','BX','SHW','AON','MCO','PANW','MO','NOC','PGR','ADP','ITW','EMR','ETN','SO','HCA','CME','TDG','GD','ICE','PH','APH','APD','DUK','ECL','WFC','USB','TFC','PNC','COF','NOW','MU','CL','KLAC','CDNS','SNPS','INTC','NFLX','CMCSA','VZ','T','TMUS','CHTR','EA','TTWO','CMG','MMM','NSC','FDX','UNP','CSX','VRSK','CTAS','RSG','WM','ROP','GWW','FAST','CARR','OTIS','IR','DOV','XYL','AME','GNRC','HUBB','JCI','IEX','LII','NDSN','SNA','TXT','WAB','ALLE','AOS','WCC','PWR','BAH','LDOS','SAIC','FLR','ROK','PNR','JBHT','EXPD','CHRW','SWK','MAS','AXON','PCAR','URI','EFX','ACM','J','SBUX','TGT','MSCI','FI','COP','SLB','EOG','MPC','PSX','VLO','OXY','HAL','BKR','DVN','EQT','APA','CTRA','MRO','HES','TRGP','KMI','OKE','WMB','AEP','EXC','SRE','PEG','ES','XEL','WEC','CMS','ED','ETR','FE','NI','PNW','PPL','DTE','PCG','AEE','CNP','EIX','D','AES','AWK','EVRG','LNT','AMT','CCI','EQIX','PSA','SPG','O','DLR','WELL','EQR','AVB','VTR','BXP','FRT','HST','KIM','WY','SBA','UDR','CPT','MAA','ESS','ARE','EXR','CUBE','NNN','VICI','GLPI','SBAC','IRM','CSGP','REXR','EGP','FR','GM','F','ORLY','AZO','APTV','BBY','ROST','DG','DLTR','HLT','MAR','YUM','DPZ','RCL','LVS','MGM','RL','PVH','TPR','HAS','MHK','WHR','LKQ','ETSY','EBAY','GPC','PHM','DHI','LEN','NVR','TOL','EXPE','ABNB','DKNG','VFC','POOL','GRMN','NCLH','CCL','WYNN','CZR','BBWI','BWA','CVNA','NWL','MDLZ','GIS','KMB','HSY','MKC','KHC','CAG','SJM','HRL','CLX','CHD','EL','KR','STZ','TAP','MNST','SYY','TSN','ADM','BG','INGR','POST','CPB','WBA','NEM','FCX','CF','MOS','IP','PKG','SEE','ALB','AVY','BALL','CE','EMN','FMC','IFF','LYB','MLM','OLN','SON','VMC','WLK','NUE','STLD','ATI','DD','CTVA','PPG','STT','BK','NDAQ','AFL','HIG','L','MET','PRU','TRV','ALL','AMP','BRO','FNF','CINF','RF','CFG','MTB','FITB','HBAN','KEY','ZION','CMA','WRB','MKL','ERIE','RJF','AJG','CBOE','TROW','IVZ','BEN','DFS','SYF','ALLY','PYPL','NTRS','FDS','KKR','APO','CVS','MCK','HUM','CNC','DGX','LH','ZBH','MTD','IQV','IDXX','ILMN','BIIB','RMD','PODD','WAT','EW','BDX','BAX','DXCM','A','HSIC','CAH','ABC','HOLX','ALGN','INCY','MRNA','PFE','MOH','GEHC','RVTY','COR','COO','STE','TFX','UTHR','DIS','WBD','IPG','OMC','FOXA','FOX','PARA','MTCH','PINS','SNAP','SPOT','NWSA','NWS','FTNT','MCHP','HPQ','HPE','GLW','IT','CDW','NTAP','KEYS','PTC','MSI','ANSS','TEL','MPWR','GDDY','CTSH','JNPR','WDC','STX','ENPH','FSLR','GEN','SWKS','TER','TYL','VRT','ON','ANET','CRWD','DDOG','UBER','VEEV','WDAY','ZS','PAYC','EPAM','FIS','GPN','FISV','MP'],
   SP400:['ACI','ATR','BECN','BLD','BRX','CABO','CBT','CIEN','CLF','CNX','COTY','CRI','CVLT','EHC','EME','EQT','EVR','EXLS','FLS','FNB','FULT','GNW','GNTX','GPI','HBI','HHC','HP','HRB','IART','IBP','INFA','ITT','JHG','KBR','KNX','KNSL','LKQ','LSTR','LTC','MDU','MHK','MLI','MMS','MTZ','NFG','NVT','NXST','OGE','OHI','OSK','PNFP','PSB','REXR','RGA','RHI','RITM','RPM','RRC','SAIC','SFM','SKX','SLM','SMAR','SNX','SSD','STAG','STE','STEP','SWX','TGNA','THO','TKR','TMHC','TNL','TOL','TPH','TPR','TRMK','TWI','TX','UHS','UMPQ','UMBF','UNF','URI','VIAV','VLY','WCC','WMS','WRLD','WSM','WTFC','XPO','YELP','YETI'],
   SP600:['ACLS','ACM','ADUS','AGIO','AIN','ALEX','ALK','AMBC','AMCX','AMPH','AMNB','AMR','AMWD','APAM','AQST','ARE','ARW','ASGN','ASTE','ATNI','ATRC','ATTO','AVNS','AVNW','AXNX','AXSM','AZZ','BCPC','BFAM','BKH','BLKB','BNS','BOX','BOOT','BRKL','BRP','BTU','BUSE','CAL','CALM','CATY','CBSH','CCOI','CDRE','CHCO','CHDN','CHE','CHEF','CLFD','CLW','CMC','CMCO','CNMD','COHU','CONN','CPF','CRGY','CSWI','CTRE','CUTR','CWT','DCOM','DLB','DNOW','DORM','DXPE','EIG','ELME','EPRT','ESTA','EXP','FARO','FCFS','FCF','FCPT','FIZZ','FLGT','FLNC','FLO','FOUR','FRME','FULT','GDEN','GKOS','GLDD','HAFC','HALO','HAYN','HCSG','HCI','HEES','HI','HLIT','HOLX','HONE','HRMY','HTBK','HWKN']
 };
@@ -2138,6 +2141,8 @@ function renderPeerList() {
       <span class="peer-st">${STATE.cache[p.ticker.toUpperCase()] ? '✓' : '·'}</span>
       <button class="peer-rm" onclick="App.removePeer(${i})" title="Remove">×</button>
     </div>`).join('');
+  const countEl = document.getElementById('peer-count');
+  if (countEl) countEl.textContent = STATE.peers.length;
 }
 
 // ============================================================
@@ -2381,17 +2386,23 @@ const App = {
     renderPeerList();
   },
 
+  clearPeers() {
+    STATE.peers = [];
+    renderPeerList();
+  },
+
   loadIndexGroup() {
     const sel = document.getElementById('index-select').value;
     if (!sel || !INDEX_DATA[sel]) return;
     const tickers = INDEX_DATA[sel];
     const note = document.getElementById('index-note');
-    note.textContent = `Loading ${tickers.length} tickers from static list (as of 2024). Large groups may take time to fetch.`;
+    note.textContent = `Loading ${tickers.length} tickers…`;
     STATE.peers = tickers
       .filter(t => t !== STATE.subject.ticker.toUpperCase())
       .map(t => ({ ticker: t, name: STATE.cache[t]?.name || t }));
     App.setPeerType('manual');
     renderPeerList();
+    App.applyConfig();
   },
 
   sortTable(col) {

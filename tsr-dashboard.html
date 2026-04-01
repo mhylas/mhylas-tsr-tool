@@ -192,6 +192,8 @@ input[type="date"]:focus{border-color:var(--teal)}
   <!-- CONFIG SIDEBAR -->
   <aside id="config-panel">
 
+    <button id="apply-btn" onclick="App.applyConfig()" style="margin-bottom:14px">&#8635; Refresh &amp; Apply</button>
+
     <div class="cfg-sec">
       <div class="cfg-sec-hdr">Subject Company</div>
       <div class="cfg-field">
@@ -300,21 +302,21 @@ input[type="date"]:focus{border-color:var(--teal)}
       <div class="cfg-sec-hdr">Measurement Period</div>
       <div class="cfg-field">
         <div class="tgl-grp" id="period-tgl">
+          <button class="tgl-btn" data-v="FY" onclick="App.setPeriodPreset('FY')">FY</button>
           <button class="tgl-btn" data-v="1Y" onclick="App.setPeriodPreset('1Y')">1Y</button>
           <button class="tgl-btn active" data-v="3Y" onclick="App.setPeriodPreset('3Y')">3Y</button>
           <button class="tgl-btn" data-v="5Y" onclick="App.setPeriodPreset('5Y')">5Y</button>
-          <button class="tgl-btn" data-v="YTD" onclick="App.setPeriodPreset('YTD')">YTD</button>
           <button class="tgl-btn" data-v="custom" onclick="App.setPeriodPreset('custom')">Custom</button>
         </div>
       </div>
-      <div id="custom-dates" style="display:none">
-        <div class="cfg-field">
+      <div class="cfg-field" style="display:flex;gap:8px">
+        <div style="flex:1">
           <label class="cfg-lbl">Start Date</label>
-          <input type="date" id="c-start" class="cfg-inp">
+          <input type="date" id="c-start" class="cfg-inp" onchange="App.onDateChange()">
         </div>
-        <div class="cfg-field">
+        <div style="flex:1">
           <label class="cfg-lbl">End Date</label>
-          <input type="date" id="c-end" class="cfg-inp">
+          <input type="date" id="c-end" class="cfg-inp" onchange="App.onDateChange()">
         </div>
       </div>
       <div id="period-display" style="font-size:11px;color:#888;margin-top:3px"></div>
@@ -389,7 +391,6 @@ input[type="date"]:focus{border-color:var(--teal)}
       </div>
     </div>
 
-    <button id="apply-btn" onclick="App.applyConfig()">&#8635; Refresh &amp; Apply</button>
     <button onclick="App.toggleCSVSection()" style="width:100%;margin-top:6px;padding:6px;background:#fff;color:var(--navy);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:11px;font-family:var(--font)">&#128196; Paste CSV Data (manual fallback)</button>
 
   </aside><!-- /config-panel -->
@@ -411,7 +412,7 @@ input[type="date"]:focus{border-color:var(--teal)}
     <!-- KPI STAT STRIP -->
     <div id="kpi-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:16px">
       <div class="kpi-cell">
-        <div class="kpi-cell-lbl">Subject TSR</div>
+        <div class="kpi-cell-lbl" id="kl-subject">Subject TSR</div>
         <div class="kpi-cell-val" id="kv-subject">—</div>
         <div class="kpi-cell-sub" id="ks-subject"></div>
       </div>
@@ -652,7 +653,11 @@ function computePeriodDates(preset) {
   if (preset === '1Y') start = new Date(end.getFullYear()-1, end.getMonth(), end.getDate());
   else if (preset === '3Y') start = new Date(end.getFullYear()-3, end.getMonth(), end.getDate());
   else if (preset === '5Y') start = new Date(end.getFullYear()-5, end.getMonth(), end.getDate());
-  else if (preset === 'YTD') start = new Date(end.getFullYear(), 0, 1);
+  else if (preset === '2Y') start = new Date(end.getFullYear()-2, end.getMonth(), end.getDate());
+  else if (preset === 'FY') {
+    // Start of the most recently completed fiscal year period (Jan 1 of current year by default)
+    start = new Date(end.getFullYear(), 0, 1);
+  }
   else return null;
   return { start: msToDateStr(start.getTime()), end: msToDateStr(end.getTime()) };
 }
@@ -1199,7 +1204,7 @@ const DEMO_SPECS = [
 function loadDemoData() {
   STATE.dataSource = 'demo';
   const endMs = Date.now();
-  const startMs = endMs - 3 * 365.25 * 86400000;
+  const startMs = endMs - (3 * 365.25 + 30) * 86400000; // 30-day buffer so 3Y period always has a start price
   const timestamps = buildTradingDays(startMs, endMs);
   DEMO_SPECS.forEach(spec => {
     const prices = generatePriceSeries(spec.price, spec.ret, spec.vol, timestamps, spec.seed);
@@ -1851,6 +1856,7 @@ function updateKPIs() {
   const pctl = sub?.percentile;
 
   const el = id => document.getElementById(id);
+  el('kl-subject').textContent = (STATE.subject.name || STATE.subject.ticker || 'Subject') + ' TSR';
   el('kv-subject').textContent = subTSR !== null ? fmt(subTSR) : '—';
   el('kv-subject').className = 'kpi-cell-val' + (subTSR > 0 ? ' pos' : subTSR < 0 ? ' neg' : '');
   el('ks-subject').textContent = `${label} · ${fmtDate(dateToMs(startDate))} – ${fmtDate(dateToMs(endDate))}`;
@@ -2249,11 +2255,26 @@ const App = {
   setPeriodPreset(preset) {
     STATE.periodPreset = preset;
     document.querySelectorAll('#period-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === preset));
-    document.getElementById('custom-dates').style.display = preset === 'custom' ? 'block' : 'none';
     if (preset !== 'custom') {
       const d = computePeriodDates(preset);
-      if (d) document.getElementById('period-display').textContent = `${fmtDate(dateToMs(d.start))} – ${fmtDate(dateToMs(d.end))}`;
+      if (d) {
+        document.getElementById('c-start').value = d.start;
+        document.getElementById('c-end').value = d.end;
+        STATE.startDate = d.start;
+        STATE.endDate = d.end;
+        document.getElementById('period-display').textContent = `${fmtDate(dateToMs(d.start))} – ${fmtDate(dateToMs(d.end))}`;
+      }
+    } else {
+      document.getElementById('period-display').textContent = '';
     }
+  },
+
+  onDateChange() {
+    STATE.startDate = document.getElementById('c-start').value;
+    STATE.endDate = document.getElementById('c-end').value;
+    STATE.periodPreset = 'custom';
+    document.querySelectorAll('#period-tgl .tgl-btn').forEach(b => b.classList.toggle('active', b.dataset.v === 'custom'));
+    document.getElementById('period-display').textContent = '';
   },
 
   setMethod(which, type) {
@@ -2522,28 +2543,21 @@ const App = {
     document.getElementById('opt-band').checked = STATE.opts.showBand;
     document.getElementById('opt-bm').checked = STATE.opts.showBenchmark;
 
-    // Set default dates
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('c-end').value = today;
-    const d3y = new Date(); d3y.setFullYear(d3y.getFullYear()-3);
-    document.getElementById('c-start').value = d3y.toISOString().split('T')[0];
-
     renderPeerList();
     this.updateMethodBadge();
 
-    // Try live fetch; fall back to demo data if everything is blocked
+    // Show demo data immediately so the page is never blank
+    loadDemoData();
+    showDemoBanner(true);
+    calculateAll();
+    renderAll();
+
+    // Fetch live data in background; replace demo if it loads
     STATE.dataSource = null;
     STATE.sourcePreference = null;
-    showLoading(true, `Fetching market data for ${getAllTickers().length} tickers…`);
     const fetched = await fetchAll();
 
-    if (fetched === 0) {
-      // All sources blocked — load demo data so the tool is usable
-      loadDemoData();
-      showDemoBanner(true);
-      hideError();
-    } else {
-      // Update peer names from real data
+    if (fetched > 0) {
       STATE.peers.forEach(p => {
         const d = STATE.cache[p.ticker.toUpperCase()];
         if (d) p.name = d.name;
@@ -2551,26 +2565,18 @@ const App = {
       STATE.subject.name = STATE.cache[STATE.subject.ticker.toUpperCase()]?.name || STATE.subject.name;
       document.getElementById('c-subject-name').value = STATE.subject.name;
       showDemoBanner(false);
+      renderPeerList();
+      calculateAll();
+      renderAll();
     }
 
-    renderPeerList();
-    calculateAll();
-    renderAll();
-    showLoading(false);
-
-    // Diagnostic: show state after init
+    // Diagnostic: source + missing tickers only
     const diag = document.getElementById('diag-panel');
     if (diag) {
-      const cacheKeys = Object.keys(STATE.cache);
-      const resKeys = STATE.results ? Object.keys(STATE.results) : [];
-      const subResult = STATE.results?.[STATE.subject.ticker];
-      diag.innerHTML =
-        `<strong>Diagnostic</strong> — Source: <em>${STATE.dataSource || 'none'}</em> &nbsp;|&nbsp; ` +
-        `Cache: ${cacheKeys.length} tickers (${cacheKeys.join(', ')}) &nbsp;|&nbsp; ` +
-        `Results: ${resKeys.length} (${resKeys.join(', ')}) &nbsp;|&nbsp; ` +
-        `Subject TSR: ${subResult ? JSON.stringify({cum: subResult.cumTSR?.toFixed(3), ann: subResult.annTSR?.toFixed(3), startP: subResult.startPrice?.toFixed(2), endP: subResult.endPrice?.toFixed(2)}) : 'null'} &nbsp;|&nbsp; ` +
-        `Chart.js loaded: ${typeof Chart !== 'undefined'} &nbsp;|&nbsp; ` +
-        `Peers w/results: ${STATE.peers.filter(p => STATE.results?.[p.ticker]?.startPrice).length}/${STATE.peers.length}`;
+      const missing = getAllTickers().filter(t => !STATE.cache[t]);
+      let html = `<strong>Data source:</strong> ${STATE.dataSource || 'none'}`;
+      if (missing.length) html += ` &nbsp;|&nbsp; <span style="color:var(--neg)"><strong>Missing:</strong> ${missing.join(', ')}</span>`;
+      diag.innerHTML = html;
       diag.style.display = 'block';
     }
   }

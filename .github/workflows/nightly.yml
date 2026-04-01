@@ -1,1 +1,41 @@
-C:\Users\MHylas\OneDrive - Semler Brossy Consulting Group\Desktop\Claude Code\TSR Tool\.github\workflows\nightly.yml
+name: Nightly Data Update
+
+on:
+  schedule:
+    - cron: '0 22 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install yfinance pandas requests
+
+      - name: Run data builder
+        run: python build_data.py
+
+      - name: Commit and push updated data
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git add data/
+          git diff --staged --quiet \
+            && echo "No data changes — nothing to commit." \
+            || (git commit -m "Data update $(date -u +%Y-%m-%d)" && git push)

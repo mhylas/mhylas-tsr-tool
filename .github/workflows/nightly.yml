@@ -38,3 +38,4 @@ jobs:
           git diff --staged --quiet \
             && echo "No data changes — nothing to commit." \
             || (git commit -m "Data update $(date -u +%Y-%m-%d)" && git push)
+          

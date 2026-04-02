@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-01T00:08:06Z",
+  "generated": "2026-04-02T23:06:01Z",
   "years": 5,
-  "count": 2969,
+  "count": 2970,
   "companies": [
     {
       "ticker": "A",
@@ -6309,11 +6309,11 @@
     },
     {
       "ticker": "LLYVA",
-      "name": "LIBERTY LIVE HOLDINGS INC"
+      "name": "LIBERTY LIVE HOLDINGS INC SERIES A"
     },
     {
       "ticker": "LLYVK",
-      "name": "LIBERTY LIVE HOLDINGS INC"
+      "name": "LIBERTY LIVE HOLDINGS INC SERIES C"
     },
     {
       "ticker": "LMAT",
@@ -11134,6 +11134,10 @@
     {
       "ticker": "VGAS",
       "name": "VERDE CLEAN FUELS INC CLASS A"
+    },
+    {
+      "ticker": "VGNT",
+      "name": "VERSIGENT PLC"
     },
     {
       "ticker": "VHI",

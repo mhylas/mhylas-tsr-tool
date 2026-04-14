@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-10T23:55:00Z",
+  "generated": "2026-04-14T00:08:20Z",
   "years": 5,
-  "count": 2970,
+  "count": 2971,
   "companies": [
     {
       "ticker": "A",
@@ -8677,7 +8677,7 @@
     },
     {
       "ticker": "PSX",
-      "name": "PHILLIPS"
+      "name": "PHILLIPS 66"
     },
     {
       "ticker": "PTC",
@@ -9270,6 +9270,10 @@
     {
       "ticker": "RVTY",
       "name": "REVVITY INC"
+    },
+    {
+      "ticker": "RWAY",
+      "name": "RUNWAY GROWTH FINANCE CORP"
     },
     {
       "ticker": "RWT",

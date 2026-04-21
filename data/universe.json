@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-18T00:02:50Z",
+  "generated": "2026-04-21T00:08:34Z",
   "years": 5,
-  "count": 2971,
+  "count": 2972,
   "companies": [
     {
       "ticker": "A",
@@ -8054,6 +8054,10 @@
     {
       "ticker": "OZK",
       "name": "BANK OZK"
+    },
+    {
+      "ticker": "P",
+      "name": "EVERPURE INC CLASS A"
     },
     {
       "ticker": "P5N994",

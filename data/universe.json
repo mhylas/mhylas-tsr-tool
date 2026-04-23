@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-21T00:08:34Z",
+  "generated": "2026-04-23T05:57:34Z",
   "years": 5,
-  "count": 2972,
+  "count": 2973,
   "companies": [
     {
       "ticker": "A",
@@ -10594,6 +10594,10 @@
     {
       "ticker": "TRAK",
       "name": "REPOSITRAK INC"
+    },
+    {
+      "ticker": "TRAX",
+      "name": "FIRST TRACKS BIOTHERAPEUTICS INC"
     },
     {
       "ticker": "TRC",

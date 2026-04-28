@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-25T00:00:17Z",
+  "generated": "2026-04-28T07:40:08Z",
   "years": 5,
-  "count": 2973,
+  "count": 2974,
   "companies": [
     {
       "ticker": "A",
@@ -3470,6 +3470,10 @@
     {
       "ticker": "EFC",
       "name": "ELLINGTON FINANCIAL INC"
+    },
+    {
+      "ticker": "EFOR",
+      "name": "EVERFORTH INC"
     },
     {
       "ticker": "EFSC",

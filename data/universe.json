@@ -1,7 +1,7 @@
 {
-  "generated": "2026-05-04T23:01:59Z",
+  "generated": "2026-05-05T23:02:14Z",
   "years": 5,
-  "count": 2974,
+  "count": 2975,
   "companies": [
     {
       "ticker": "A",
@@ -7894,6 +7894,10 @@
     {
       "ticker": "ONON",
       "name": "ON HOLDING AG CLASS A"
+    },
+    {
+      "ticker": "ONT",
+      "name": "ONTERRIS INC"
     },
     {
       "ticker": "ONTF",

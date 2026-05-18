@@ -1,8 +1,36 @@
 {
-  "generated": "2026-05-15T23:03:05Z",
+  "generated": "2026-05-18T23:12:50Z",
   "years": 5,
-  "count": 2977,
+  "count": 2989,
   "companies": [
+    {
+      "ticker": ");",
+      "name": ");"
+    },
+    {
+      "ticker": ";",
+      "name": ";"
+    },
+    {
+      "ticker": "<A",
+      "name": "<A"
+    },
+    {
+      "ticker": "<LI >",
+      "name": "<LI >"
+    },
+    {
+      "ticker": "<LI>",
+      "name": "<LI>"
+    },
+    {
+      "ticker": "<SPAN>",
+      "name": "<SPAN>"
+    },
+    {
+      "ticker": ">",
+      "name": ">"
+    },
     {
       "ticker": "A",
       "name": "AGILENT TECHNOLOGIES INC"
@@ -5218,6 +5246,10 @@
     {
       "ticker": "HTLD",
       "name": "HEARTLAND EXPRESS INC"
+    },
+    {
+      "ticker": "HTML",
+      "name": "HTML"
     },
     {
       "ticker": "HTO",
@@ -11910,6 +11942,22 @@
     {
       "ticker": "ZYME",
       "name": "ZYMEWORKS INC"
+    },
+    {
+      "ticker": "}",
+      "name": "}"
+    },
+    {
+      "ticker": "})();",
+      "name": "})();"
+    },
+    {
+      "ticker": "});",
+      "name": "});"
+    },
+    {
+      "ticker": "};",
+      "name": "};"
     }
   ]
 }

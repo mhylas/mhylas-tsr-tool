@@ -1,4 +1,11 @@
 [
+  ");",
+  ";",
+  "<A",
+  "<LI >",
+  "<LI>",
+  "<SPAN>",
+  ">",
   "ADRO",
   "AKE",
   "BFA",
@@ -14,6 +21,7 @@
   "GTXI",
   "HEIA",
   "HSBBK",
+  "HTML",
   "INH",
   "JPMSW",
   "LENB",
@@ -29,5 +37,9 @@
   "THRD",
   "UBFUT",
   "UHALB",
-  "XTSLA"
+  "XTSLA",
+  "}",
+  "})();",
+  "});",
+  "};"
 ]
